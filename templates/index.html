@@ -6,6 +6,8 @@
             <p>Real-time capture and intrusion detection.</p>
         </div>
         <div class="top-actions">
+            <select id="replaySelect" aria-label="Sample capture to replay"><option value="">Sample capture...</option></select>
+            <button id="replayBtn" class="btn btn-secondary">Replay</button>
             <button id="startBtn" class="btn btn-success">Start IDS</button>
             <button id="stopBtn" class="btn btn-danger" disabled>Stop IDS</button>
         </div>
@@ -62,10 +64,12 @@
             <div class="card-header">
                 <div>
                     <h2>Traffic Overview</h2>
-                    <p>Live capture is summarized in charts to reduce UI load. Use the Flows page or Export to retrieve detailed flow data.</p>
+                    <p>The last 60 seconds. Use the Flows page or Export for details.</p>
                 </div>
             </div>
             <div class="card-body" style="padding:16px;">
+                <div class="chart-wrap"><canvas id="trafficChart"></canvas></div>
+                <div class="chart-legend"><span class="blue">Packets/sec</span><span class="red">Attacks/sec</span></div>
                 <div id="chartSummary" style="min-height:180px; display:flex; gap:12px; align-items:center; justify-content:center; color:var(--text-secondary);">
                     <div>
                         <h3>Packets/sec</h3>

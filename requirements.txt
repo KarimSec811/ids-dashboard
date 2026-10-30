@@ -1,14 +1,12 @@
-# Python dependencies for the IDS dashboard backend.
-# Install with: pip install -r requirements.txt
-#
-# You ALSO need tshark (Wireshark's CLI) installed as a system package --
-# pyshark is just a Python wrapper around it, it isn't pip-installable on
-# its own:
-#   Debian/Ubuntu: sudo apt install tshark
-#   macOS:         brew install wireshark
-#   Windows:       install Wireshark, make sure tshark.exe is on PATH
+Flask>=3.0
+Flask-SocketIO>=5.3
+simple-websocket>=1.0      # real WebSocket transport for the threaded server
+pyshark>=0.6               # needs Wireshark/tshark installed on the host
+psutil>=5.9
 
-Flask>=3.1,<4.0
-Flask-SocketIO>=5.6,<6.0
-eventlet>=0.41,<0.42
-pyshark>=0.6,<0.7
+# optional: GeoIP enrichment (also needs a MaxMind GeoLite2-City.mmdb and "geoip_db_path" in config.json)
+# geoip2>=4.8
+
+# development / tests
+pytest>=8
+scapy>=2.5                 # tests/make_pcaps.py
