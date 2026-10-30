@@ -1,0 +1,57 @@
+{
+  "interface": "lo",
+  "capture_bpf": null,
+  "sampling_rate": 1,
+  "portsweep_port_threshold": 5,
+  "ipsweep_host_threshold": 5,
+  "alerts_db_path": "data/alerts.db",
+  "flows_db_path": "data/flows.db",
+  "ioc_list_path": "data/ioc.txt",
+  "detection": {
+    "match_threshold": 0.95,
+    "half_open_grace_seconds": 2.0,
+    "half_open_min_count": 10
+  },
+  "threat_intel": {
+    "neptune": {"severity": "high"},
+    "portsweep": {"severity": "medium"}
+  },
+  "thresholds": {
+    "neptune": {
+      "protocol_types": ["tcp"],
+      "flags": ["S0", "REJ", "RSTO"],
+      "zero_fields": ["duration", "src_bytes", "dst_bytes", "land", "wrong_fragment", "urgent", "hot",
+                      "num_failed_logins", "logged_in", "num_compromised", "root_shell"],
+      "ranges": {
+        "count": [1, 302], "srv_count": [1, 150],
+        "serror_rate": [0, 1], "srv_serror_rate": [0, 1], "rerror_rate": [0, 1], "srv_rerror_rate": [0, 1],
+        "same_srv_rate": [0, 1], "diff_srv_rate": [0, 1], "srv_diff_host_rate": [0, 1],
+        "dst_host_count": [1, 255], "dst_host_srv_count": [1, 255],
+        "dst_host_same_srv_rate": [0, 1], "dst_host_diff_srv_rate": [0, 1],
+        "dst_host_same_src_port_rate": [0, 1], "dst_host_srv_diff_host_rate": [0, 1],
+        "dst_host_serror_rate": [0, 1], "dst_host_srv_serror_rate": [0, 1],
+        "dst_host_rerror_rate": [0, 1], "dst_host_srv_rerror_rate": [0, 1]
+      }
+    },
+    "smurf": {
+      "protocol_types": ["icmp"],
+      "services": ["ecr_i"],
+      "flags": ["SF"],
+      "zero_fields": ["duration", "dst_bytes", "land", "wrong_fragment", "urgent", "hot", "logged_in"],
+      "ranges": {"src_bytes": [400, 1100], "count": [2, 511], "srv_count": [2, 511],
+                 "same_srv_rate": [0.9, 1]}
+    },
+    "teardrop": {
+      "protocol_types": ["udp"],
+      "zero_fields": ["duration", "dst_bytes", "land", "urgent", "hot", "logged_in"],
+      "ranges": {"wrong_fragment": [1, 3], "src_bytes": [0, 1500]}
+    },
+    "guess_passwd": {
+      "protocol_types": ["tcp"],
+      "services": ["ftp", "telnet", "pop_3"],
+      "flags": ["SF", "S1", "S2", "S3"],
+      "zero_fields": ["land", "wrong_fragment", "urgent"],
+      "ranges": {"num_failed_logins": [1, 10], "logged_in": [0, 0]}
+    }
+  }
+}
