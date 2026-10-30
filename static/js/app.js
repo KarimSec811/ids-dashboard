@@ -1,364 +1,172 @@
-﻿// static/js/app.js
+// static/js/app.js -- page controller (tables, alert buttons, inspector, replay)
 import { Dashboard } from './dashboard.js';
 import { SocketManager } from './socket.js';
 import { Utils } from './utils.js';
 
-window.Utils = Utils;
+const $ = id => document.getElementById(id);
+const E = Utils.esc;
 
 class App {
     constructor() {
-        window.app = this;
-        this.socket = new SocketManager();
-        this.tableRefreshTimer = null;
         this.page = document.body.dataset.page || 'dashboard';
-        this.setupUI();
-
-        Dashboard.subscribe(() => {
-            this.updateSummaryCards();
-            this.scheduleTableRefresh();
-        });
+        this.socket = new SocketManager();
+        this.timer = null;
+        this.investigating = null;
+        this.bindControls();
+        this.loadReplays();
+        Dashboard.subscribe(() => this.scheduleRender());
     }
 
-
-    scheduleTableRefresh() {
-        if (this.tableRefreshTimer) return;
-        this.tableRefreshTimer = setTimeout(() => {
-            this.tableRefreshTimer = null;
-            this.renderCurrentPage();
-        }, 200);
+    // ---- rendering (batched: at most one redraw per 200 ms) ----
+    scheduleRender() {
+        if (this.timer) return;
+        this.timer = setTimeout(() => { this.timer = null; this.render(); }, 200);
     }
 
-    renderCurrentPage() {
-        if (this.page === 'alerts') {
-            this.renderAlerts();
-        } else if (this.page === 'flows') {
-            this.renderFlows();
-        } else {
-            this.renderDashboardFlows();
-        }
+    render() {
+        if (this.page === 'alerts') this.renderAlerts();
+        if (this.page === 'flows') this.renderFlows();
     }
 
-    renderDashboardFlows() {
-        const flows = Dashboard.flows;
-        const tableBody = document.getElementById('mainTableBody');
-        if (!tableBody) return;
-        this.renderTableRows(tableBody, flows, ['flow_id', 'timestamp', 'src_ip', 'dst_ip', 'protocol_type', 'outcome', 'confidence', 'src_bytes', 'dst_bytes', 'duration'], true);
-
-        const visibleRows = document.getElementById('visibleRows');
-        const totalRows = document.getElementById('totalRows');
-        if (visibleRows) visibleRows.textContent = Math.min(flows.length, 100);
-        if (totalRows) totalRows.textContent = flows.length;
+    fill(bodyId, rows, cols, emptyTitle, emptyText) {
+        const body = $(bodyId);
+        if (!body) return;
+        body.innerHTML = rows.length ? rows.join('') :
+            `<tr><td colspan="${cols}"><div class="empty-state"><h3>${emptyTitle}</h3><p>${emptyText}</p></div></td></tr>`;
     }
 
     renderFlows() {
-        const flows = Dashboard.flows;
-        const tableBody = document.getElementById('flowListBody');
-        if (!tableBody) return;
-        this.renderTableRows(tableBody, flows, ['flow_id', 'src_ip', 'dst_ip', 'protocol_type', 'outcome', 'confidence'], true);
+        const flows = [...Dashboard.flows.values()].reverse().slice(0, 200);
+        this.fill('flowListBody', flows.map(f => `
+            <tr data-key="${E(f.flow_id)}" class="${f.outcome && f.outcome !== 'normal' ? 'attack-row' : ''}">
+                <td>${E(f.flow_id)}</td>
+                <td>${E(f.src_ip)}:${E(f.src_port)}</td>
+                <td>${E(f.dst_ip)}:${E(f.dst_port)}</td>
+                <td>${E(f.protocol_type)}</td>
+                <td><span class="attack-badge ${E(f.outcome)}">${E(f.outcome || 'normal')}</span></td>
+                <td>${Math.round((f.confidence || 0) * 100)}%</td>
+            </tr>`), 6, 'Flow history is empty', 'Start capture (or replay a sample) and traffic will appear here.');
     }
 
     renderAlerts() {
-        const alerts = Dashboard.alerts;
-        const tableBody = document.getElementById('alertsTableBody');
-        if (!tableBody) return;
-        // fields for display (renderTableRows will add action column for alerts)
-        this.renderTableRows(tableBody, alerts, ['timestamp', 'src_ip', 'dst_ip', 'outcome', 'severity', 'confidence'], false, 'alerts');
+        const alerts = [...Dashboard.alerts.values()]
+            .sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)));
+        this.fill('alertsTableBody', alerts.map(a => {
+            const key = E(a.id || a.flow_id), acked = !!a.acknowledged;
+            return `
+            <tr data-key="${key}" class="${acked ? '' : 'attack-row'}">
+                <td>${E(Utils.formatTime(a.timestamp))}</td>
+                <td>${E(a.src_ip)}</td>
+                <td>${E(a.dst_ip)}</td>
+                <td><span class="attack-badge ${E(a.outcome)}">${E(a.outcome)}</span>${a.ioc_matches && a.ioc_matches.length ? ' <span class="ioc-badge">IOC</span>' : ''}</td>
+                <td class="sev-${E(a.severity)}">${E(a.severity || '-')}</td>
+                <td>${Math.round((a.confidence || 0) * 100)}%</td>
+                <td>${E(a.count ?? 1)}</td>
+                <td style="display:flex;gap:6px;">
+                    <button class="btn btn-sm btn-secondary ack-btn" data-key="${key}" ${acked ? 'disabled' : ''}>${acked ? 'Acknowledged' : 'Acknowledge'}</button>
+                    <button class="btn btn-sm btn-info investigate-btn" data-key="${key}">Investigate</button>
+                    <button class="btn btn-sm btn-warning false-btn" data-key="${key}">False positive</button>
+                </td>
+            </tr>`;
+        }), 8, 'No alerts yet', 'Suspicious activity will show up here. Repeated detections are grouped into one alert.');
     }
 
-    // Event delegation for alert actions
-    _handleAlertAction(e) {
-        const ackBtn = e.target.closest('.ack-btn');
-        if (ackBtn) {
-            const flowId = ackBtn.getAttribute('data-flowid');
-            if (!flowId) return;
-            this.socket.socket.emit('ack_alert', { flow_id: flowId });
-            // optimistically mark acknowledged in UI
-            const alert = Dashboard.alerts.find(a => a.flow_id === flowId);
-            if (alert) {
-                alert.acknowledged = true;
-                this.scheduleTableRefresh();
-            }
-            return;
-        }
-
-        const invBtn = e.target.closest('.investigate-btn');
-        if (invBtn) {
-            const flowId = invBtn.getAttribute('data-flowid');
-            if (!flowId) return;
-            // open investigation modal
-            this.showInvestigationModal(flowId);
-            return;
-        }
-
-        const falseBtn = e.target.closest('.false-btn');
-        if (falseBtn) {
-            const flowId = falseBtn.getAttribute('data-flowid');
-            if (!flowId) return;
-            if (!confirm('Mark this alert as false positive?')) return;
-            this.socket.socket.emit('investigate_alert', { flow_id: flowId, note: 'Marked false positive', false_positive: true });
-            const alert = Dashboard.alerts.find(a => a.flow_id === flowId);
-            if (alert) {
-                alert.acknowledged = true;
-                alert.investigated = true;
-                alert.investigator_notes = alert.investigator_notes || [];
-                alert.investigator_notes.push({ note: 'Marked false positive', timestamp: new Date().toISOString(), false_positive: true });
-                this.scheduleTableRefresh();
-            }
-            return;
-        }
-    }
-
-    setupUI() {
-        // Investigation modal elements and handlers
-        this._currentInvestigationFlow = null;
-        const modal = document.getElementById('investigateModal');
-        if (modal) {
-            const saveBtn = document.getElementById('investigateSaveBtn');
-            const cancelBtn = document.getElementById('investigateCancelBtn');
-            const noteInput = document.getElementById('investigationNoteInput');
-            const invInput = document.getElementById('investigatorNameInput');
-            saveBtn.addEventListener('click', () => {
-                const flowId = this._currentInvestigationFlow;
-                const note = noteInput.value.trim();
-                const investigator = invInput.value.trim() || null;
-                if (!flowId) return;
-                this.socket.socket.emit('investigate_alert', { flow_id: flowId, note: note, investigator: investigator });
-                // optimistic UI update
-                const alert = Dashboard.alerts.find(a => a.flow_id === flowId);
-                if (alert) {
-                    alert.acknowledged = true;
-                    alert.investigated = true;
-                    alert.investigator_notes = alert.investigator_notes || [];
-                    alert.investigator_notes.push({ note: note || '', timestamp: new Date().toISOString(), false_positive: false, investigator: investigator });
-                    if (investigator) alert.investigator = investigator;
-                    this.scheduleTableRefresh();
-                }
-                noteInput.value = '';
-                invInput.value = '';
-                this.hideInvestigationModal();
-            });
-            cancelBtn.addEventListener('click', () => {
-                noteInput.value = '';
-                invInput.value = '';
-                this.hideInvestigationModal();
-            });
-        }
-        const startBtn = document.getElementById('startBtn');
-        if (startBtn) {
-            startBtn.addEventListener('click', () => {
-                this.socket.startIDS();
-            });
-        }
-
-        const stopBtn = document.getElementById('stopBtn');
-        if (stopBtn) {
-            stopBtn.addEventListener('click', () => {
-                this.socket.stopIDS();
-            });
-        }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === ' ' && e.target === document.body) {
-                e.preventDefault();
-                if (startBtn && !startBtn.disabled) {
-                    this.socket.startIDS();
-                } else if (stopBtn && !stopBtn.disabled) {
-                    this.socket.stopIDS();
-                }
-            }
-        });
-
-        // Load history button (alerts page)
-        const loadHistoryBtn = document.getElementById('loadHistoryBtn');
-        if (loadHistoryBtn) {
-            loadHistoryBtn.addEventListener('click', async () => {
-                try {
-                    const resp = await fetch('/alerts/history?limit=200');
-                    if (!resp.ok) throw new Error('Failed to fetch');
-                    const data = await resp.json();
-                    if (data && Array.isArray(data)) {
-                        Dashboard.addAlerts(data.map(d => d.alert || d));
-                    }
-                } catch (e) {
-                    console.error('Failed loading history', e);
-                    alert('Failed to load history');
-                }
-            });
-        }
-
-        // delegated click for alert acknowledge buttons and row clicks
-        document.addEventListener('click', (e) => {
-            // prioritize ack button handling
-            this._handleAlertAction(e);
-            // row click to inspect flow/alert (but not when clicking any
-            // action button inside the row -- was only excluding .ack-btn,
-            // so Investigate/False-Positive clicks also popped the
-            // inspector panel open behind the modal/confirm dialog)
-            const tr = e.target.closest('tr[data-flowid]');
-            if (tr && !e.target.closest('.ack-btn') && !e.target.closest('.investigate-btn') && !e.target.closest('.false-btn')) {
-                const flowId = tr.getAttribute('data-flowid');
-                if (flowId) this.openInspector(flowId);
-            }
-        });
-    }
-
-    renderTableRows(tableBody, items, fields, highlightAttacks = false, type = 'flows') {
-        if (!items || items.length === 0) {
-            const colspan = type === 'alerts' ? (fields.length + 1) : fields.length;
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="${colspan}">
-                        <div class="empty-state">
-                            <h3>${type === 'alerts' ? 'No alerts yet' : 'No data yet'}</h3>
-                            <p>${type === 'alerts' ? 'Wait for suspicious activity to be detected.' : 'Start the IDS and wait for packets to appear.'}</p>
-                        </div>
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        const rows = items.slice(0, 100).map(item => {
-            const cells = fields.map(field => {
-                let value = item[field] ?? '-';
-                if (field === 'timestamp') {
-                    value = Utils.formatTime(value);
-                }
-                if (field === 'confidence') {
-                    const confidence = item.confidence ?? 0;
-                    value = `${Math.round(confidence * 100)}%`;
-                }
-                // add IOC badge for alerts (after outcome field is rendered in its column)
-                return `<td>${value}</td>`;
-            }).join('');
-            const highlight = highlightAttacks && item.outcome !== 'normal';
-            const flowIdAttr = item.flow_id ? ` data-flowid="${item.flow_id}"` : '';
-            let row = `<tr class="${highlight ? 'attack-row' : ''}"${flowIdAttr}>${cells}`;
-            if (type === 'alerts') {
-                const acked = item.acknowledged ? true : false;
-                const ackBtn = `<button class="btn btn-sm btn-secondary ack-btn" data-flowid="${item.flow_id}" ${acked ? 'disabled' : ''}>${acked ? 'Acknowledged' : 'Acknowledge'}</button>`;
-                const invBtn = `<button class="btn btn-sm btn-info investigate-btn" data-flowid="${item.flow_id}">Investigate</button>`;
-                const falseBtn = `<button class="btn btn-sm btn-warning false-btn" data-flowid="${item.flow_id}">False Positive</button>`;
-                row += `<td style="display:flex;gap:6px;">${ackBtn}${invBtn}${falseBtn}</td>`;
-            }
-            row += `</tr>`;
-            return row;
-        }).join('');
-
-        tableBody.innerHTML = rows;
-
-        // append IOC badges for alerts rows (non-blocking DOM ops)
-        if (type === 'alerts') {
+    // ---- buttons ----
+    bindControls() {
+        const on = (id, fn) => { const el = $(id); if (el) el.addEventListener('click', fn); };
+        const s = this.socket;
+        on('startBtn', () => s.startIDS());
+        on('stopBtn', () => s.stopIDS());
+        on('replayBtn', () => { const f = $('replaySelect') && $('replaySelect').value; if (f) s.startIDS(f); });
+        on('inspectorClose', () => this.closeInspector());
+        on('loadHistoryBtn', async () => {
             try {
-                const trs = tableBody.querySelectorAll('tr');
-                for (let i = 0; i < trs.length && i < items.length && i < 100; i++) {
-                    const it = items[i];
-                    if (it && it.ioc_matches && it.ioc_matches.length) {
-                        const td = trs[i].children[3]; // outcome column index
-                        if (td) td.innerHTML = td.innerHTML + ` <span class="ioc-badge">IOC</span>`;
-                    }
-                }
-            } catch (e) {
-                // swallow UI errors
-            }
+                const r = await fetch('/alerts/history?limit=200');
+                if (!r.ok) throw new Error(r.status);
+                Dashboard.addAlerts(await r.json());
+            } catch (e) { alert('Could not load alert history.'); }
+        });
+        on('investigateCancelBtn', () => this.closeModal());
+        on('investigateSaveBtn', () => {
+            if (this.investigating) s.socket.emit('investigate_alert', {
+                id: this.investigating,
+                note: $('investigationNoteInput').value.trim(),
+                investigator: $('investigatorNameInput').value.trim() || null,
+            });
+            this.closeModal();
+        });
+
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('button[data-key]');
+            if (btn) return this.alertAction(btn);
+            const row = e.target.closest('tr[data-key]');
+            if (row) this.openInspector(row.dataset.key);
+        });
+    }
+
+    alertAction(btn) {
+        const key = btn.dataset.key, c = btn.classList, sock = this.socket.socket;
+        if (c.contains('ack-btn')) sock.emit('ack_alert', { id: key });
+        else if (c.contains('false-btn')) {
+            if (confirm('Mark this alert as a false positive?'))
+                sock.emit('investigate_alert', { id: key, note: 'Marked false positive', false_positive: true });
+        } else if (c.contains('investigate-btn')) {
+            this.investigating = key;
+            $('investigationNoteInput').value = '';
+            $('investigatorNameInput').value = '';
+            const m = $('investigateModal');
+            m.classList.add('open'); m.setAttribute('aria-hidden', 'false');
         }
     }
 
-    openInspector(flowId) {
-        // find flow or alert by flowId
-        const byFlow = (arr) => arr.find(f => f.flow_id === flowId);
-        const item = byFlow(Dashboard.flows) || byFlow(Dashboard.alerts);
-        const panel = document.getElementById('inspectorPanel');
-        const body = document.getElementById('inspectorBody');
-        const title = document.getElementById('inspectorTitle');
-        const exportBtn = document.getElementById('exportJsonBtn');
-        if (!panel || !body) return;
-        if (!item) {
-            body.innerHTML = '<p class="empty-state">Details not available</p>';
-            title.textContent = 'Inspector';
-        } else {
-            title.textContent = `Inspector — ${item.flow_id || item.src_ip || 'item'}`;
-            // render details as dl list
-            const entries = [];
-            for (const k of Object.keys(item)) {
-                const v = item[k];
-                let display = v;
-                if (k === 'timestamp') display = Utils.formatTime(v);
-                if (typeof v === 'object') display = JSON.stringify(v);
-                entries.push(`<dt>${k}</dt><dd>${display}</dd>`);
-            }
-            body.innerHTML = `<dl>${entries.join('\n')}</dl>`;
-            exportBtn.onclick = () => this.exportFlowJson(item);
-        }
+    closeModal() {
+        const m = $('investigateModal');
+        if (m) { m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); }
+        this.investigating = null;
+    }
+
+    // ---- replay of sample captures (no capture privileges needed) ----
+    async loadReplays() {
+        const sel = $('replaySelect');
+        if (!sel) return;
+        try {
+            const data = await (await fetch('/api/pcaps')).json();
+            for (const p of data.pcaps || []) sel.add(new Option(p.name, p.name));
+        } catch (e) { /* no replay files available */ }
+    }
+
+    // ---- inspector ----
+    openInspector(key) {
+        const item = Dashboard.alerts.get(key) || Dashboard.flows.get(key);
+        const panel = $('inspectorPanel'), body = $('inspectorBody');
+        if (!item || !panel || !body) return;
+        $('inspectorTitle').textContent = item.id ? `Alert: ${item.outcome}` : 'Flow';
+        const why = item.reasons && item.reasons.length
+            ? `<h4>Why it was flagged</h4><ul>${item.reasons.map(r => `<li>${E(r)}</li>`).join('')}</ul>` : '';
+        const pcap = item.id
+            ? `<p><a class="btn btn-sm btn-secondary" href="${E(Utils.withToken('/export/alert_pcap?id=' + encodeURIComponent(item.id)))}">Download evidence PCAP</a></p>` : '';
+        const rows = Object.entries(item).filter(([k]) => k !== 'reasons').map(([k, v]) => {
+            const shown = /timestamp|first_seen|last_seen/.test(k) ? Utils.formatTime(v)
+                : (v !== null && typeof v === 'object') ? JSON.stringify(v) : v;
+            return `<dt>${E(k)}</dt><dd>${E(shown)}</dd>`;
+        }).join('');
+        body.innerHTML = `${why}${pcap}<dl>${rows}</dl>`;
+        $('exportJsonBtn').onclick = () => this.downloadJson(item);
         panel.classList.add('open');
         panel.setAttribute('aria-hidden', 'false');
     }
 
     closeInspector() {
-        const panel = document.getElementById('inspectorPanel');
-        if (!panel) return;
-        panel.classList.remove('open');
-        panel.setAttribute('aria-hidden', 'true');
+        const panel = $('inspectorPanel');
+        if (panel) { panel.classList.remove('open'); panel.setAttribute('aria-hidden', 'true'); }
     }
 
-    exportFlowJson(item) {
-        const filename = `${item.flow_id || 'flow'}-${(item.timestamp || '').replace(/[:.]/g,'-')}.json`;
-        const dataStr = JSON.stringify(item, null, 2);
-        const blob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
+    downloadJson(item) {
+        const url = URL.createObjectURL(new Blob([JSON.stringify(item, null, 2)], { type: 'application/json' }));
+        const a = Object.assign(document.createElement('a'), { href: url, download: `${item.id || 'flow'}.json` });
+        document.body.appendChild(a); a.click(); a.remove();
         URL.revokeObjectURL(url);
     }
-
-    updateSummaryCards() {
-        const totalPackets = document.getElementById('totalPackets');
-        const attackPackets = document.getElementById('attackPackets');
-        const captureStatus = document.getElementById('captureStatus');
-        const packetRate = document.getElementById('packetRate');
-        const uptime = document.getElementById('uptime');
-
-        if (totalPackets) totalPackets.textContent = Dashboard.counters.packets;
-        if (attackPackets) attackPackets.textContent = Dashboard.counters.attacks;
-        if (captureStatus) captureStatus.textContent = Dashboard.health.capture_status || 'STOPPED';
-        if (packetRate) packetRate.textContent = `${Dashboard.health.packets_per_sec || 0} pkt/s`;
-        if (uptime) uptime.textContent = Dashboard.health.uptime || '00:00:00';
-
-        // large summary numbers on dashboard
-        const packetRateLarge = document.getElementById('packetRateLarge');
-        const attacksRateLarge = document.getElementById('attacksRateLarge');
-        const alertCountLarge = document.getElementById('alertCountLarge');
-        if (packetRateLarge) packetRateLarge.textContent = Dashboard.health.packets_per_sec || 0;
-        if (attacksRateLarge) attacksRateLarge.textContent = Dashboard.health.attacks_per_sec || 0;
-        if (alertCountLarge) alertCountLarge.textContent = Dashboard.counters.alerts || 0;
-    }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    window.app = new App();
-});
-
-// Modal helpers
-App.prototype.showInvestigationModal = function(flowId) {
-    const modal = document.getElementById('investigateModal');
-    const noteInput = document.getElementById('investigationNoteInput');
-    const invInput = document.getElementById('investigatorNameInput');
-    if (!modal) return;
-    this._currentInvestigationFlow = flowId;
-    noteInput.value = '';
-    invInput.value = '';
-    modal.classList.add('open');
-    modal.setAttribute('aria-hidden', 'false');
-}
-
-App.prototype.hideInvestigationModal = function() {
-    const modal = document.getElementById('investigateModal');
-    if (!modal) return;
-    modal.classList.remove('open');
-    modal.setAttribute('aria-hidden', 'true');
-    this._currentInvestigationFlow = null;
-}
+document.addEventListener('DOMContentLoaded', () => { window.app = new App(); });

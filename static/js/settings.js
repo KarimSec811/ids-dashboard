@@ -1,74 +1,35 @@
-// static/js/settings.js
-import { Dashboard } from './dashboard.js';
+// static/js/settings.js -- settings page (plain script, no imports)
+(() => {
+    const form = document.getElementById('settingsForm');
+    if (!form) return;
+    const msg = document.getElementById('settingsMsg');
+    const token = localStorage.getItem('ids_token') || '';
 
-export class SettingsManager {
-    constructor() {
-        this.loadSettings();
-        this.setupListeners();
-    }
-    
-    loadSettings() {
-        const saved = localStorage.getItem('ids_settings');
-        if (saved) {
-            try {
-                const settings = JSON.parse(saved);
-                Object.assign(Dashboard.settings, settings);
-            } catch (e) {
-                console.warn('Failed to load settings', e);
+    fetch('/api/interfaces').then(r => r.json()).then(d => {
+        const list = document.getElementById('ifaceList');
+        for (const name of (d.capture_interfaces && d.capture_interfaces.length ? d.capture_interfaces : d.interfaces) || [])
+            list.appendChild(new Option(name, name));
+    }).catch(() => {});
+
+    form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const body = {};
+        new FormData(form).forEach((v, k) => { body[k] = v; });
+        try {
+            const r = await fetch('/settings/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...(token ? { 'X-IDS-Token': token } : {}) },
+                body: JSON.stringify(body),
+            });
+            const data = await r.json().catch(() => ({}));
+            if (r.ok) {
+                msg.textContent = data.restart_required
+                    ? 'Saved. Stop and start the IDS for the interface/filter change to apply.' : 'Saved.';
+                msg.className = 'msg-ok';
+            } else {
+                msg.textContent = (data.errors || [data.error || `Error ${r.status}`]).join(' | ');
+                msg.className = 'msg-err';
             }
-        }
-        
-        // Apply theme
-        this.applyTheme();
-    }
-    
-    saveSettings() {
-        localStorage.setItem('ids_settings', JSON.stringify(Dashboard.settings));
-    }
-    
-    toggleTheme() {
-        Dashboard.settings.theme = Dashboard.settings.theme === 'dark' ? 'light' : 'dark';
-        this.applyTheme();
-        this.saveSettings();
-    }
-    
-    applyTheme() {
-        const isDark = Dashboard.settings.theme === 'dark';
-        document.body.classList.toggle('dark-mode', isDark);
-        
-        // Update Chart.js themes
-        document.dispatchEvent(new CustomEvent('theme:change', {
-            detail: { theme: Dashboard.settings.theme }
-        }));
-    }
-    
-    toggleLiveUpdates() {
-        Dashboard.settings.liveUpdates = !Dashboard.settings.liveUpdates;
-        this.saveSettings();
-        
-        const btn = document.getElementById('pause-updates');
-        if (btn) {
-            btn.innerHTML = Dashboard.settings.liveUpdates 
-                ? '<i class="fas fa-pause"></i> Пауза'
-                : '<i class="fas fa-play"></i> Продолжить';
-            btn.classList.toggle('btn-warning', !Dashboard.settings.liveUpdates);
-        }
-    }
-    
-    setupListeners() {
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            // Ctrl+Shift+D - Toggle dark mode
-            if (e.ctrlKey && e.shiftKey && e.key === 'D') {
-                e.preventDefault();
-                this.toggleTheme();
-            }
-            
-            // Ctrl+Shift+P - Toggle pause
-            if (e.ctrlKey && e.shiftKey && e.key === 'P') {
-                e.preventDefault();
-                this.toggleLiveUpdates();
-            }
-        });
-    }
-}
+        } catch (err) { msg.textContent = 'Could not reach the server.'; msg.className = 'msg-err'; }
+    });
+})();
