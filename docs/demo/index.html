@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IDS Dashboard</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/extra.css">
+</head>
+<body data-page="dashboard">
+    <div class="app">
+        <aside class="sidebar">
+            <div>
+                <div class="logo">
+                    <div class="logo-icon">IDS</div>
+                    <div>
+                        <h2>IDS Console</h2>
+                        <span>Security monitoring</span>
+                    </div>
+                </div>
+                <nav>
+                    <a class="nav-btn active" href="index.html">Dashboard</a>
+                    <a class="nav-btn " href="alerts.html">Alerts</a>
+                    <a class="nav-btn " href="flows.html">Flows</a>
+                    <a class="nav-btn " href="export.html">Export</a>
+                    <a class="nav-btn " href="settings.html">Settings</a>
+                </nav>
+            </div>
+
+            <div class="sidebar-bottom">
+                <div class="system-status">
+                    <span class="status-dot"></span>
+                    <div>
+                        <strong>Realtime capture</strong>
+                        <div class="status-summary">Connected to capture engine</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main id="main" class="main-content">
+                <a href="#main" class="skip-link">Skip to content</a>
+                
+    <header class="topbar">
+        <div class="topbar-left">
+            <h1>Network IDS Dashboard</h1>
+            <p>Real-time capture and intrusion detection.</p>
+        </div>
+        <div class="top-actions">
+            <select id="replaySelect" aria-label="Sample capture to replay"><option value="">Sample capture...</option></select>
+            <button id="replayBtn" class="btn btn-secondary">Replay</button>
+            <button id="startBtn" class="btn btn-success">Start IDS</button>
+            <button id="stopBtn" class="btn btn-danger" disabled>Stop IDS</button>
+        </div>
+    </header>
+
+    <section class="system-banner">
+        <div>
+            <h3>Capture Status</h3>
+            <span id="captureStatus">STOPPED</span>
+        </div>
+        <div>
+            <h3>Total Packets</h3>
+            <span id="totalPackets">0</span>
+        </div>
+        <div>
+            <h3>Detected Attacks</h3>
+            <span id="attackPackets">0</span>
+        </div>
+        <div>
+            <h3>Packet Rate</h3>
+            <span id="packetRate">0 pkt/s</span>
+        </div>
+    </section>
+
+    <section class="card health-card">
+        <div class="card-header">
+            <h2>System Health</h2>
+        </div>
+        <div class="health-list">
+            <div class="health-row">
+                <span>CPU Usage</span>
+                <span id="cpuUsage">0%</span>
+            </div>
+            <div class="progress"><div id="cpuBar" style="width: 0%"></div></div>
+            <div class="health-row">
+                <span>Memory</span>
+                <span id="memoryUsage">0 MB</span>
+            </div>
+            <div class="progress"><div id="memoryBar" style="width: 0%"></div></div>
+            <div class="health-row">
+                <span>Queue</span>
+                <span id="queueValue">0</span>
+            </div>
+            <div class="progress"><div id="queueBar" style="width: 0%"></div></div>
+            <div class="health-row">
+                <span>Uptime</span>
+                <span id="uptime">00:00:00</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="flows-section">
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h2>Traffic Overview</h2>
+                    <p>The last 60 seconds. Use the Flows page or Export for details.</p>
+                </div>
+            </div>
+            <div class="card-body" style="padding:16px;">
+                <div class="chart-wrap"><canvas id="trafficChart"></canvas></div>
+                <div class="chart-legend"><span class="blue">Packets/sec</span><span class="red">Attacks/sec</span></div>
+                <div id="chartSummary" style="min-height:180px; display:flex; gap:12px; align-items:center; justify-content:center; color:var(--text-secondary);">
+                    <div>
+                        <h3>Packets/sec</h3>
+                        <div id="packetRateLarge" style="font-size:28px; font-weight:700;">0</div>
+                    </div>
+                    <div>
+                        <h3>Attacks/sec</h3>
+                        <div id="attacksRateLarge" style="font-size:28px; font-weight:700; color:var(--danger);">0</div>
+                    </div>
+                    <div>
+                        <h3>Active Alerts</h3>
+                        <div id="alertCountLarge" style="font-size:28px; font-weight:700; color:var(--warning);">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+                <!-- Inspector panel: shows selected flow/alert details -->
+                <aside id="inspectorPanel" class="inspector-panel" aria-hidden="true">
+                    <div class="inspector-header">
+                        <h3 id="inspectorTitle">Inspector</h3>
+                        <button id="inspectorClose" class="btn btn-sm" aria-label="Close inspector">Close</button>
+                    </div>
+                    <div id="inspectorBody" class="inspector-body">
+                        <p class="empty-state"><em>Select a flow or alert to inspect details.</em></p>
+                    </div>
+                    <div class="inspector-footer">
+                        <button id="exportJsonBtn" class="btn btn-secondary">Export JSON</button>
+                    </div>
+                </aside>
+
+                <!-- Investigation modal -->
+                <div id="investigateModal" class="modal" aria-hidden="true">
+                    <div class="modal-content">
+                        <h3>Investigate Alert</h3>
+                        <label for="investigatorNameInput">Investigator name (optional)</label>
+                        <input id="investigatorNameInput" type="text" placeholder="Your name">
+                        <label for="investigationNoteInput">Note (optional)</label>
+                        <textarea id="investigationNoteInput" rows="4" placeholder="Describe what you investigated or findings"></textarea>
+                        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+                            <button id="investigateCancelBtn" class="btn">Cancel</button>
+                            <button id="investigateSaveBtn" class="btn btn-primary">Save</button>
+                        </div>
+                    </div>
+                </div>
+
+                <footer>
+                    <div style="display:flex;gap:12px;align-items:center;justify-content:space-between;">
+                        <div>
+                            <strong>Network Intrusion Detection System</strong>
+                            <div class="muted">Built with Flask & Socket.IO</div>
+                        </div>
+                        <div id="statusSummaryCompact" style="text-align:right;">
+                            <div id="statusMessage" class="status-message status-info">Disconnected</div>
+                            <div class="muted small">Updated: <span id="statusUpdated">--:--:--</span></div>
+                        </div>
+                    </div>
+                </footer>
+            </main>
+    </div>
+
+    <script src="demo-shim.js"></script>
+    <script src="static/js/app.js" type="module"></script>
+    
+</body>
+</html>

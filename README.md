@@ -1,344 +1,139 @@
-# 🛡️ Network Intrusion Detection System (IDS)
+# Network IDS Dashboard
 
-Real-time network monitoring with **MITRE ATT&CK mapping**, **host reputation**, and **live threat intelligence**.
+[![CI](https://github.com/KarimSec811/ids-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/KarimSec811/ids-dashboard/actions/workflows/ci.yml)
+[![Live demo](https://img.shields.io/badge/live%20demo-open-2563eb)](https://karimsec811.github.io/ids-dashboard/demo/)
 
-[![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://python.org)
-[![Flask](https://img.shields.io/badge/Flask-3.0-green.svg)](https://flask.palletsprojects.com)
-[![SocketIO](https://img.shields.io/badge/SocketIO-5.9-orange.svg)](https://socket.io)
-[![MITRE ATT&CK](https://img.shields.io/badge/MITRE%20ATT%26CK-Mapped-red.svg)](https://attack.mitre.org)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+A network intrusion-detection sensor that tracks **TCP connection state** instead of judging packets one by one, so a SYN flood, a port scan and an IP sweep each raise **one explainable alert** with ATT&CK mapping, evidence and a downloadable PCAP. It comes with a live dashboard, replayable demo captures, and an honest list of what it misses.
 
----
+**[Try the live demo](https://karimsec811.github.io/ids-dashboard/demo/)** (no install: a recording of the real dashboard replaying `demo_mixed.pcap`)
 
-## 📋 Table of Contents
+<!-- Add a 10-20 s screen recording here once recorded:  ![Dashboard replaying a SYN flood, a port scan and an IP sweep](docs/demo.gif) -->
 
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Quick Start](#-quick-start)
-- [Detection Engine](#-detection-engine)
-- [MITRE ATT&CK Mappings](#-mitre-attck-mappings)
-- [Project Structure](#-project-structure)
-- [Configuration](#-configuration)
-- [License](#-license)
+## What it detects
 
----
+| Alert | ATT&CK | How it is decided |
+|---|---|---|
+| `neptune` (SYN flood) | T1498 / T1499 | Many connections to one host that never completed the TCP handshake, *and* they dominate recent traffic to it (a busy server is not a flood) |
+| `portsweep` | T1046 | Distinct ports on one host probed with **failed** attempts (refused, reset, or unanswered after a grace period) |
+| `ipsweep` | T1046 | Distinct hosts probed by one source with failed attempts |
 
-## ✨ Features
+A set of NSL-KDD-style signatures (`smurf`, `teardrop`, `guess_passwd`, ...) is also available through `config.json`. It is kept for compatibility and experimentation; it is not what the sensor's accuracy rests on.
 
-### 🔥 Detection Engine
-- **12+ attack types**: Neptune, Portsweep, Ipsweep, Smurf, Satan, Back, Teardrop, Warezclient, Guess_Passwd, Mscan, Processtable, Pod
-- **NSL-KDD feature extraction**: 40+ features per flow
-- **Scored matching** with configurable confidence thresholds (0.5 - 1.0)
-- **TCP state machine tracking** (SF, S0, REJ, RSTO, etc.)
-- **Cross-flow aggregation** for accurate detection
-- **Host reputation scoring** per source IP
+Every alert carries `reasons` (why it fired), `evidence` (the feature values), and the number of events, flows and sources it aggregates.
 
-### 📊 SOC Dashboard
-- Live packet capture with real-time analysis
-- 6+ interactive charts (traffic, attacks, protocols, timeline, top sources, services)
-- Searchable, sortable, filterable flow table
-- Flow inspector with MITRE ATT&CK mapping
-- Alert management with investigation workflow
-- System health monitoring (CPU, Memory, Queue, Uptime)
-- Dark SOC theme optimized for monitoring
+## How it works
 
-### 🛡️ Security Intelligence
-- **MITRE ATT&CK technique mapping** (T1046, T1498, T1110, etc.)
-- **Host reputation** scoring per source IP
-- **IOC detection** (IPs, CIDRs, domains)
-- **Reverse DNS** enrichment
-- Alert acknowledgment and false positive flagging
-
-### 🚀 Performance
-- Async event-driven architecture
-- Packet sampling for high throughput
-- SQLite persistence for alerts and flows
-- Real-time WebSocket updates
-- Throttled UI updates for smooth performance
-
----
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| **Backend** | Flask, Flask-SocketIO, eventlet |
-| **Packet Capture** | pyshark (tshark wrapper) |
-| **System Monitoring** | psutil |
-| **Frontend** | Vanilla JS (ES6 modules), Chart.js |
-| **Database** | SQLite |
-| **Styling** | CSS3 with CSS variables |
-| **Real-time** | WebSocket (Socket.IO) |
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Python 3.11+
-- tshark (Wireshark CLI)
-
-**Install tshark:**
-```
-# Ubuntu/Debian
-sudo apt-get install tshark
-
-# macOS
-brew install wireshark
-
-# Windows
-# Download from https://www.wireshark.org/download.html
-# Make sure tshark.exe is on PATH
+```mermaid
+flowchart LR
+  A["tshark / PCAP replay"] --> B["CaptureSession<br/>(pyshark thread)"]
+  B --> C["PacketAnalyzer<br/>flow state, features, signatures"]
+  C --> D["AlertAggregator"]
+  D --> E["Flask-SocketIO"]
+  E --> F["Browser dashboard"]
+  D --> G[("SQLite<br/>alerts + flow log")]
 ```
 
-### Installation
+- **Connection state, not packet flags.** `ConnState` follows each TCP connection through handshake and teardown (S0, S1, SF, REJ, RSTO, ...). Flows are oriented by the SYN, so a capture that starts mid-connection still knows who the client is.
+- **Bounded memory.** Time windows, per-source probe history and the flow table are pruned, so a spoofed flood cannot exhaust the sensor.
+- **Scoring ignores conditions that cannot fail.** Counters are lower-bounded only, so a bigger flood never scores as a smaller one.
+- **One alert per attack, not per packet.** Alerts are grouped per attacker/victim pair (or per victim for floods) inside a cooldown window.
 
-```
-# 1. Clone the repository
-git clone https://github.com/YOUR_USERNAME/ids-dashboard.git
-cd ids-dashboard
+## Results with real attack tools
 
-# 2. Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # Linux/macOS
-.venv\Scripts\activate      # Windows
+`eval/run_netns_lab.sh` builds a virtual lab (a Metasploitable-style victim with 17 services), attacks it with **real nmap, masscan, hping3 and fping**, replays each capture through the sensor and scores it against ground truth. Full table: [docs/EVALUATION.md](docs/EVALUATION.md).
 
-# 3. Install dependencies
-pip install -r requirements.txt
+| Scenario | Result |
+|---|---|
+| nmap SYN / connect / FIN / XMAS scans, masscan (1,000 ports) | detected, **1 alert each**, within 0.1-0.2 s |
+| nmap `-T2` polite scan | detected, 1 alert, 2.5 s |
+| nmap ping sweep, fping sweep (routed hosts) | detected, 1 alert, 2.0-2.6 s |
+| hping3 SYN flood, from a real host and with spoofed sources | detected, 1 alert each |
+| FTP password guessing | detected (`guess_passwd`), 1 alert |
+| 300 parallel HTTP requests, a service tour of 7 ports, a small admin scan, ping | **0 alerts** |
+| nmap `-T1` (one probe every 15 s), UDP scan, SYN flood to a closed port | missed, by design (see Limitations) |
 
-# 4. Update config.json with your network interface
-tshark -D  # List available interfaces
-# Edit config.json and set "interface" to your interface name
+> **Development set, not a final test.** The first run with real tools missed a single-host `hping3` flood: the attacker's own kernel resets every SYN-ACK, so connections never looked half-open. That is fixed (with two regression tests) and recorded in the report's findings log. Because the engine was corrected while building this evaluation, these numbers are optimistic. The unbiased test is the same scripts run once in a VM lab (Kali against Metasploitable), with Zeek and Suricata as baselines: the harness is ready, see [eval/README.md](eval/README.md).
 
-# 5. Run the application
-python app.py
+## Results on synthetic PCAPs
 
-# 6. Open browser
-http://localhost:5000
-```
+Measured on the labelled captures generated by `tests/make_pcaps.py`: alerts raised by the first version of this project (per-packet signature matching) against the current engine.
 
----
+| Scenario | First version | Now |
+|---|---|---|
+| Normal web traffic (1,176 packets, 6 parallel connections per page load) | 63 false `neptune` alerts | 0 |
+| One client browsing 25 different servers | 105 false `ipsweep` alerts | 0 |
+| SYN flood from spoofed sources (600 packets) | 141 `neptune` alerts | 1 aggregated alert (589 events, ~590 sources) |
+| Port scan, 60 ports (121 packets) | 57 alerts | 1 |
+| IP sweep, 40 hosts (41 packets) | 37 alerts | 1 |
 
-## 🔧 Detection Engine
+> **Read this before trusting the table:** these captures are synthetic and were written with the same assumptions as the detectors, so this shows regressions are fixed, not that the sensor works on real networks. Evaluation on real traffic against Zeek and Suricata is the next milestone (see Roadmap).
 
-### What Was Broken & How We Fixed It
+## Quick start
 
-The original detection engine had three critical bugs that rendered it ineffective:
-
-#### 1. TCP Flag Detection
-**Problem:** The `flag` feature was computed from a single packet's raw TCP-flags byte. An ordinary PSH+ACK data packet matched the table entry for `RSTO`, causing routine traffic to satisfy attack signatures by accident.
-
-**Fix:** Implemented `ConnState` class that tracks the SYN / SYN-ACK / ACK / FIN / RST sequence across the **whole connection**, matching the actual Zeek/Bro `conn_state` values.
-
-#### 2. Cross-Flow Features
-**Problem:** `dst_host_count` and all `dst_host_*` features were computed from a single flow's own packet history. A single 5-tuple connection only has one destination IP, so `dst_host_count` was stuck at 1 forever, meaning `satan`, `smurf`, and `portsweep` could never fire.
-
-**Fix:** Implemented `HostConnectionTracker` that tracks:
-- 2-second time window across ALL connections (for `count`, `srv_count`, `*error_rate`)
-- 100-connection window per destination host (for `dst_host_*` features)
-
-#### 3. Matching Logic
-**Problem:** Matching required **every single** zero_field and range condition to hold simultaneously (strict AND across 15-38 conditions). Real traffic has jitter.
-
-**Fix:** Scored matching – `zero_fields` and `ranges` contribute to a score (fraction satisfied) rather than being all-or-nothing.
-
-### Detection Architecture
-
-```
-Network Packet
-      ↓
-pyshark Capture
-      ↓
-ConnState (TCP state tracking)
-      ↓
-HostConnectionTracker (cross-flow aggregation)
-      ↓
-FlowFeatures (40+ NSL-KDD features)
-      ↓
-score_attack() (scored matching)
-      ↓
-classify() (pick highest scoring attack above threshold)
-      ↓
-Alert → Dashboard → Socket.IO → Frontend
+```bash
+git clone https://github.com/KarimSec811/ids-dashboard && cd ids-dashboard
+python -m venv .venv && source .venv/bin/activate     # Windows: .venv\Scripts\activate
+pip install -r requirements.txt                       # Wireshark/tshark must be installed
+python app.py                                         # http://127.0.0.1:5000
 ```
 
----
+Choose `demo_mixed.pcap` under **Sample capture...** and click **Replay**. This needs no capture privileges. For live capture, set the interface in **Settings** (it needs capture privileges: Administrator/root, or `CAP_NET_RAW` for dumpcap).
 
-## 🎯 MITRE ATT&CK Mappings
+The demo PCAPs ship in `test_pcaps/`; regenerate them with `python tests/make_pcaps.py` (needs scapy).
 
-| Attack | MITRE Techniques | Tactic |
-|--------|------------------|--------|
-| Neptune (SYN Flood) | T1498, T1499 | Impact |
-| Portsweep | T1046 | Discovery |
-| Ipsweep | T1046 | Discovery |
-| Smurf (ICMP Flood) | T1498, T1499 | Impact |
-| Satan | T1046, T1595 | Reconnaissance |
-| Back | T1046, T1190 | Initial Access |
-| Teardrop | T1498 | Impact |
-| Warezclient | T1048 | Exfiltration |
-| Guess_Passwd | T1110 | Credential Access |
-| Mscan | T1046, T1595 | Reconnaissance |
-| Processtable | T1005 | Impact |
-| Pod (Ping of Death) | T1498 | Impact |
+## Security design
 
----
+- Binds to `127.0.0.1` by default. A non-loopback bind is refused unless `IDS_API_TOKEN` is set (or `IDS_ALLOW_INSECURE=1`).
+- With a token, settings changes, start/stop/acknowledge, and evidence-PCAP export require it.
+- Settings are allow-listed and range-checked (an unvalidated settings endpoint is an IDS-evasion primitive: a BPF filter that hides the attacker).
+- Everything that comes from the network (reverse DNS, DNS names, SNI) is escaped in the UI and stripped of control characters on the server. CSV export neutralises spreadsheet formulas.
+- Replay files are selected by bare file name inside `test_pcaps/` only. Evidence-PCAP filters are built only from validated IPs and integers.
+- Reverse DNS defaults to internal addresses only, so the sensor does not tip off an attacker's DNS server.
 
-## 📁 Project Structure
+## Limitations
 
-```
-ids-dashboard/
-├── app.py                 # Flask backend + detection engine
-├── config.json            # Configuration
-├── requirements.txt       # Python dependencies
-├── README.md              # Documentation
-├── LICENSE                # MIT License
-├── .gitignore             # Git ignore rules
-│
-├── templates/
-│   ├── base.html          # Base template (sidebar, navigation)
-│   ├── index.html         # Dashboard page
-│   ├── alerts.html        # Alerts page
-│   ├── flows.html         # Flows page
-│   ├── export.html        # Export page
-│   └── settings.html      # Settings page
-│
-├── static/
-│   ├── css/
-│   │   └── style.css      # All styles (dark SOC theme)
-│   └── js/
-│       ├── app.js         # Entry point (orchestrator)
-│       ├── socket.js      # Socket.IO communication
-│       ├── dashboard.js   # State management
-│       ├── table.js       # Table rendering
-│       ├── charts.js      # Chart.js visualizations
-│       ├── alerts.js      # Alert management
-│       ├── inspector.js   # Flow inspector (MITRE mapping)
-│       ├── filters.js     # Search & filters
-│       ├── exporter.js    # Export (CSV, JSON, PCAP)
-│       ├── settings.js    # Settings UI
-│       └── utils.js       # Helper functions
-│
-├── data/                  # Runtime (auto-created)
-│   ├── alerts.db          # Alerts database
-│   └── flows.db           # Flows database
-│
-└── test_pcaps/            # (Optional) Test PCAP files
-```
+- **Validated against real attack tools in a virtual lab (a development set), not yet on a held-out lab or production traffic.** Nothing here has seen a real network's background noise beyond the short benign scenarios.
+- **Throughput is a few hundred to ~1,500 packets/s**, limited by pyshark/tshark parsing. The detection engine itself takes ~0.5 ms per packet. This is a learning-grade sensor, not a line-rate one.
+- **Evasions that work today:** slow scans below the probe window, scans distributed across many sources, and anything encrypted (payload heuristics only run on cleartext protocols).
+- **Sweeps of dead hosts on a flat Ethernet segment are invisible**: the probes stop at ARP and never become IP packets (Zeek's scan detection has the same blind spot). Only routed or IP-level sweeps are seen.
+- **The sensor's clock follows packets.** An unanswered probe is declared failed when a later packet arrives, so a completely silent link delays that alert.
+- **A flood of SYNs to a closed port** (answered with RST) is not reported as a SYN flood.
+- Live-capture alerts have no stored packets: the "evidence PCAP" records the *next* packets between the same hosts. Alerts from a replayed capture get the exact packets.
+- It is not a replacement for Zeek or Suricata.
 
----
+## Roadmap
 
-## ⚙️ Configuration
+1. Held-out evaluation in a VM lab (Kali against Metasploitable) with Zeek and Suricata baselines, plus a one-hour benign soak to measure false positives per hour. The harness is ready: `eval/README.md`.
+2. Threat model and one detection card per detector (logic, tuning, expected false positives, evasions).
+3. SIEM output (JSONL/CEF) with Wazuh decoder and rules.
 
-### `config.json`
-
-| Key | Description | Default |
-|-----|-------------|---------|
-| `interface` | Network interface to capture on | `"eth0"` |
-| `match_threshold` | Detection confidence threshold (0.5-1.0) | `0.95` |
-| `half_open_grace_seconds` | Wait time before classifying half-open connections | `2.0` |
-| `half_open_min_count` | Minimum half-open connections to trigger detection | `10` |
-| `sampling_rate` | Process 1 of N packets (higher = less CPU) | `1` |
-| `capture_bpf` | BPF filter (e.g., `"tcp port 80"`) | `null` |
-| `portsweep_port_threshold` | Number of ports to trigger portsweep | `10` |
-| `ipsweep_host_threshold` | Number of hosts to trigger ipsweep | `10` |
-
-### Tuning Recommendations
-
-| Scenario | Match Threshold | Grace Period | Sampling Rate |
-|----------|-----------------|--------------|---------------|
-| **Low false positives** | 0.95 | 2.0s | 1 |
-| **Balanced** | 0.90 | 1.0s | 2 |
-| **High detection** | 0.80 | 0.5s | 1 |
-| **High traffic load** | 0.90 | 1.0s | 5-10 |
-
----
-
-## 🧪 Testing Without Live Capture
+## Repository layout
 
 ```
-# Run offline detection test harness
-python test_detection.py
+app.py                  Flask + Socket.IO entry point (routes, events, background services)
+ids/engine.py           flow state, features, signatures, alert aggregation
+ids/capture.py          live capture and PCAP replay (pyshark)
+ids/intel.py            IOC matching, reverse DNS, optional GeoIP
+ids/store.py            SQLite persistence (alerts, flow log)
+ids/settings.py         validated config.json updates
+templates/, static/     dashboard (plain HTML/CSS/JS, no build step)
+tests/                  engine, golden-PCAP and web-layer tests
+eval/                   evaluation harness: scenarios, lab runner, scoring, results/ (PCAPs + ground truth)
+tools/build_demo.py     builds the static live demo into docs/demo/
+API.md                  Socket.IO events, HTTP routes, alert/flow schemas
 ```
 
-Expected results:
-- Normal traffic → `normal`
-- SYN flood → `neptune`
-- Port scan → `portsweep`
-- Host scan → `ipsweep`
-- ICMP flood → `smurf` or `ipsweep`
+## Tests
 
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push: `git push origin feature/amazing-feature`
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 Acknowledgments
-
-- [NSL-KDD Dataset](https://www.unb.ca/cic/datasets/nsl.html) for attack signatures
-- [MITRE ATT&CK](https://attack.mitre.org/) for threat intelligence mapping
-- [Chart.js](https://www.chartjs.org/) for visualizations
-- [pyshark](https://github.com/KimiNewt/pyshark) for packet capture
-
----
-
-## 👨‍💻 Author
-
-**Your Name**
-- GitHub: [@YOUR_USERNAME](https://github.com/YOUR_USERNAME)
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/YOUR_LINKEDIN)
-
----
-
-## ⭐ Support
-
-If you find this project useful, please give it a star on GitHub!
-
----
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-| Issue | Solution |
-|-------|----------|
-| **No packets captured** | Check `config.json` interface name: `tshark -D` |
-| **Permission denied** | Run with `sudo` on Linux, Administrator on Windows |
-| **Port 5000 already in use** | Change port in `app.py`: `socketio.run(app, debug=False, port=5001)` |
-| **Socket.IO not connecting** | Check CORS settings in `app.py` |
-| **CPU alternating 0** | Fixed in `get_system_health()` with cached CPU values |
-
-### Debug Mode
-
-Add to `app.py` to enable debug logging:
-
-```python
-logging.basicConfig(level=logging.DEBUG)
+```bash
+python tests/make_pcaps.py && python -m pytest tests -q      # 47 tests, ~40 s, needs tshark
+sudo eval/run_netns_lab.sh                                   # real attack tools in a virtual lab, ~10 min (Linux)
 ```
 
----
+The golden tests replay every labelled PCAP through the real tshark pipeline and assert the exact alerts. If you change a detector, they tell you what moved.
 
-## 🚀 Roadmap
-
-- [ ] Network graph visualization
-- [ ] PDF report generation
-- [ ] Email/Slack alerts
-- [ ] Attack story timeline
-- [ ] Multi-user support
+Rebuild the live demo after changing the UI: `python tools/build_demo.py`.
 
 ---
 
-**Built with ❤️ for security monitoring**
+Built by Kareem ([@KarimSec811](https://github.com/KarimSec811)).

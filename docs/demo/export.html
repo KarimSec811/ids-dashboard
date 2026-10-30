@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IDS Dashboard</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/extra.css">
+</head>
+<body data-page="export">
+    <div class="app">
+        <aside class="sidebar">
+            <div>
+                <div class="logo">
+                    <div class="logo-icon">IDS</div>
+                    <div>
+                        <h2>IDS Console</h2>
+                        <span>Security monitoring</span>
+                    </div>
+                </div>
+                <nav>
+                    <a class="nav-btn " href="index.html">Dashboard</a>
+                    <a class="nav-btn " href="alerts.html">Alerts</a>
+                    <a class="nav-btn " href="flows.html">Flows</a>
+                    <a class="nav-btn active" href="export.html">Export</a>
+                    <a class="nav-btn " href="settings.html">Settings</a>
+                </nav>
+            </div>
+
+            <div class="sidebar-bottom">
+                <div class="system-status">
+                    <span class="status-dot"></span>
+                    <div>
+                        <strong>Realtime capture</strong>
+                        <div class="status-summary">Connected to capture engine</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main id="main" class="main-content">
+                <a href="#main" class="skip-link">Skip to content</a>
+                
+    <header class="topbar">
+        <div class="topbar-left">
+            <h1>Export</h1>
+            <p>Export IDS data for offline review and analysis.</p>
+        </div>
+    </header>
+
+    <section class="card">
+        <div class="card-header">
+            <div>
+                <h2>Export Options</h2>
+                <p>Export flow summaries or raw PCAPs for incident investigation.</p>
+            </div>
+        </div>
+        <div class="card-body" style="padding: 24px; gap: 16px; display: grid;">
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <a class="btn btn-secondary" href="/export/flows.csv">Export current flows (CSV)</a>
+                <a class="btn btn-secondary" href="/export/alerts.csv">Export alerts (CSV)</a>
+            </div>
+
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                <label for="alertSelect"><strong>Export suspicious traffic PCAP</strong></label>
+                <select id="alertSelect" style="min-width:320px;">
+                    <option value="">Select recent alert...</option>
+                </select>
+                <button id="exportPcapBtn" class="btn btn-secondary">Export PCAP</button>
+            </div>
+
+            <p class="status-summary">Alerts from a replayed sample give the exact packets. For live alerts, packets are not stored, so the export records the next few seconds of traffic between the same hosts.</p>
+            <p id="exportMsg" role="status"></p>
+        </div>
+    </section>
+
+
+                <!-- Inspector panel: shows selected flow/alert details -->
+                <aside id="inspectorPanel" class="inspector-panel" aria-hidden="true">
+                    <div class="inspector-header">
+                        <h3 id="inspectorTitle">Inspector</h3>
+                        <button id="inspectorClose" class="btn btn-sm" aria-label="Close inspector">Close</button>
+                    </div>
+                    <div id="inspectorBody" class="inspector-body">
+                        <p class="empty-state"><em>Select a flow or alert to inspect details.</em></p>
+                    </div>
+                    <div class="inspector-footer">
+                        <button id="exportJsonBtn" class="btn btn-secondary">Export JSON</button>
+                    </div>
+                </aside>
+
+                <!-- Investigation modal -->
+                <div id="investigateModal" class="modal" aria-hidden="true">
+                    <div class="modal-content">
+                        <h3>Investigate Alert</h3>
+                        <label for="investigatorNameInput">Investigator name (optional)</label>
+                        <input id="investigatorNameInput" type="text" placeholder="Your name">
+                        <label for="investigationNoteInput">Note (optional)</label>
+                        <textarea id="investigationNoteInput" rows="4" placeholder="Describe what you investigated or findings"></textarea>
+                        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+                            <button id="investigateCancelBtn" class="btn">Cancel</button>
+                            <button id="investigateSaveBtn" class="btn btn-primary">Save</button>
+                        </div>
+                    </div>
+                </div>
+
+                <footer>
+                    <div style="display:flex;gap:12px;align-items:center;justify-content:space-between;">
+                        <div>
+                            <strong>Network Intrusion Detection System</strong>
+                            <div class="muted">Built with Flask & Socket.IO</div>
+                        </div>
+                        <div id="statusSummaryCompact" style="text-align:right;">
+                            <div id="statusMessage" class="status-message status-info">Disconnected</div>
+                            <div class="muted small">Updated: <span id="statusUpdated">--:--:--</span></div>
+                        </div>
+                    </div>
+                </footer>
+            </main>
+    </div>
+
+    <script src="demo-shim.js"></script>
+    <script src="static/js/app.js" type="module"></script>
+    
+<script src="static/js/export.js"></script>
+
+</body>
+</html>

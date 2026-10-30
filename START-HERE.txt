@@ -1,0 +1,12 @@
+Copy everything in this folder over your repo (same paths; it overwrites README.md, API.md, ids/engine.py,
+tests/test_engine.py, tools/build_demo.py, docs/demo/). New: eval/, Makefile, docs/EVALUATION.md.
+
+1. python -m pytest tests -q           -> 47 tests should pass (needs tshark)
+2. Commit eval/results/netns/ (5 MB of PCAPs + ground truth: it is the evidence behind docs/EVALUATION.md)
+3. Add to .gitignore:  eval/results_vm/   lab_results*/   (your VM-lab output; commit it deliberately, not by accident)
+
+YOUR VM LAB (the held-out test) -- full steps in eval/README.md, in short:
+  Kali:     sudo python3 eval/run_lab.py --victim <metasploitable-ip> --iface <lab-iface> \
+              --sweep-start <unused-ip> --sweep-end <unused-ip> --out lab_results_vm
+  Windows:  python eval\evaluate.py --results lab_results_vm --config config.json --out docs\EVALUATION-VM.md
+Run it ONCE. Do not change thresholds and re-run to improve the table.

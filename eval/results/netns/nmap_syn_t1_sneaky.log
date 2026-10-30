@@ -1,0 +1,16 @@
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2026-10-27 11:34 UTC
+Nmap scan report for 10.77.0.10
+Host is up (0.000078s latency).
+
+PORT  STATE  SERVICE
+1/tcp closed tcpmux
+2/tcp closed compressnet
+3/tcp closed compressnet
+4/tcp closed unknown
+5/tcp closed rje
+6/tcp closed unknown
+7/tcp closed echo
+8/tcp closed unknown
+MAC Address: 2E:6C:29:17:E3:5F (Unknown)
+
+Nmap done: 1 IP address (1 host up) scanned in 135.14 seconds

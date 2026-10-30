@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IDS Dashboard</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/extra.css">
+</head>
+<body data-page="alerts">
+    <div class="app">
+        <aside class="sidebar">
+            <div>
+                <div class="logo">
+                    <div class="logo-icon">IDS</div>
+                    <div>
+                        <h2>IDS Console</h2>
+                        <span>Security monitoring</span>
+                    </div>
+                </div>
+                <nav>
+                    <a class="nav-btn " href="index.html">Dashboard</a>
+                    <a class="nav-btn active" href="alerts.html">Alerts</a>
+                    <a class="nav-btn " href="flows.html">Flows</a>
+                    <a class="nav-btn " href="export.html">Export</a>
+                    <a class="nav-btn " href="settings.html">Settings</a>
+                </nav>
+            </div>
+
+            <div class="sidebar-bottom">
+                <div class="system-status">
+                    <span class="status-dot"></span>
+                    <div>
+                        <strong>Realtime capture</strong>
+                        <div class="status-summary">Connected to capture engine</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main id="main" class="main-content">
+                <a href="#main" class="skip-link">Skip to content</a>
+                
+    <header class="topbar">
+        <div class="topbar-left">
+            <h1>Alerts</h1>
+            <p>Detected attacks. Repeated detections of the same attack are grouped into one alert.</p>
+        </div>
+        <div class="top-actions">
+            <button id="loadHistoryBtn" class="btn btn-secondary">Load history</button>
+        </div>
+    </header>
+
+    <section class="card">
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Source</th>
+                        <th>Destination</th>
+                        <th>Type</th>
+                        <th>Severity</th>
+                        <th>Confidence</th>
+                        <th>Events</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="alertsTableBody"></tbody>
+            </table>
+        </div>
+    </section>
+
+
+                <!-- Inspector panel: shows selected flow/alert details -->
+                <aside id="inspectorPanel" class="inspector-panel" aria-hidden="true">
+                    <div class="inspector-header">
+                        <h3 id="inspectorTitle">Inspector</h3>
+                        <button id="inspectorClose" class="btn btn-sm" aria-label="Close inspector">Close</button>
+                    </div>
+                    <div id="inspectorBody" class="inspector-body">
+                        <p class="empty-state"><em>Select a flow or alert to inspect details.</em></p>
+                    </div>
+                    <div class="inspector-footer">
+                        <button id="exportJsonBtn" class="btn btn-secondary">Export JSON</button>
+                    </div>
+                </aside>
+
+                <!-- Investigation modal -->
+                <div id="investigateModal" class="modal" aria-hidden="true">
+                    <div class="modal-content">
+                        <h3>Investigate Alert</h3>
+                        <label for="investigatorNameInput">Investigator name (optional)</label>
+                        <input id="investigatorNameInput" type="text" placeholder="Your name">
+                        <label for="investigationNoteInput">Note (optional)</label>
+                        <textarea id="investigationNoteInput" rows="4" placeholder="Describe what you investigated or findings"></textarea>
+                        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+                            <button id="investigateCancelBtn" class="btn">Cancel</button>
+                            <button id="investigateSaveBtn" class="btn btn-primary">Save</button>
+                        </div>
+                    </div>
+                </div>
+
+                <footer>
+                    <div style="display:flex;gap:12px;align-items:center;justify-content:space-between;">
+                        <div>
+                            <strong>Network Intrusion Detection System</strong>
+                            <div class="muted">Built with Flask & Socket.IO</div>
+                        </div>
+                        <div id="statusSummaryCompact" style="text-align:right;">
+                            <div id="statusMessage" class="status-message status-info">Disconnected</div>
+                            <div class="muted small">Updated: <span id="statusUpdated">--:--:--</span></div>
+                        </div>
+                    </div>
+                </footer>
+            </main>
+    </div>
+
+    <script src="demo-shim.js"></script>
+    <script src="static/js/app.js" type="module"></script>
+    
+</body>
+</html>
