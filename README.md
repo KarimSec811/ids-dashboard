@@ -9,7 +9,7 @@ A network intrusion-detection sensor that tracks **TCP connection state** instea
 
 <!-- Add a 10-20 s screen recording here once recorded:  ![Dashboard replaying a SYN flood, a port scan and an IP sweep](docs/demo.gif) -->
 
-## What it detects
+## What it detects (for examples)
 
 | Alert | ATT&CK | How it is decided |
 |---|---|---|
