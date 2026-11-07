@@ -1,7 +1,12 @@
 # Network IDS Dashboard
 
-[![CI](https://github.com/KarimSec811/ids-dashboard/ci.yml)](https://github.com/KarimSec811/ids-dashboard/actions/workflows/ci.yml)
+[![CI](https://github.com/KarimSec811/ids-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/KarimSec811/ids-dashboard/actions/workflows/ci.yml)
 [![Live demo](https://img.shields.io/badge/live%20demo-open-2563eb)](https://karimsec811.github.io/ids-dashboard/demo/)
+[![GitHub repo](https://img.shields.io/badge/GitHub-ids--dashboard-181717?logo=github&logoColor=white)](https://github.com/KarimSec811/ids-dashboard)
+[![Stars](https://img.shields.io/github/stars/KarimSec811/ids-dashboard?logo=github&label=stars)](https://github.com/KarimSec811/ids-dashboard/stargazers)
+[![Last commit](https://img.shields.io/github/last-commit/KarimSec811/ids-dashboard)](https://github.com/KarimSec811/ids-dashboard/commits/main)
+[![License](https://img.shields.io/github/license/KarimSec811/ids-dashboard)](https://github.com/KarimSec811/ids-dashboard/blob/main/LICENSE)
+[![Python](https://img.shields.io/badge/python-3.12-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 
 A network intrusion-detection sensor that tracks **TCP connection state** instead of judging packets one by one, so a SYN flood, a port scan and an IP sweep each raise **one explainable alert** with ATT&CK mapping, evidence and a downloadable PCAP. It comes with a live dashboard, replayable demo captures, and an honest list of what it misses.
 
