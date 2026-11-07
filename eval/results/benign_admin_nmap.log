@@ -1,0 +1,11 @@
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2026-11-07 18:00 UTC
+Nmap scan report for 10.77.0.10
+Host is up (0.00014s latency).
+
+PORT     STATE SERVICE
+22/tcp   open  ssh
+80/tcp   open  http
+3306/tcp open  mysql
+MAC Address: 16:3C:8C:41:E7:45 (Unknown)
+
+Nmap done: 1 IP address (1 host up) scanned in 0.09 seconds

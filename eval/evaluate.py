@@ -50,6 +50,7 @@ def main():
     ap.add_argument("--results", default="lab_results")
     ap.add_argument("--config", default=str(ROOT / "tests" / "fixtures" / "config.json"))
     ap.add_argument("--out", default=str(ROOT / "docs" / "EVALUATION.md"))
+    ap.add_argument("--only", default="", help="comma separated scenario names (quick runs)")
     ap.add_argument("--notes", default=str(Path(__file__).resolve().parent / "NOTES.md"))
     ap.add_argument("--soak", default=None, help="long benign capture to measure false positives per hour")
     args = ap.parse_args()
@@ -59,6 +60,9 @@ def main():
     config = settings.analyzer_config()
     info = json.loads((results / "lab_info.json").read_text()) if (results / "lab_info.json").exists() else {}
     truth = [json.loads(line) for line in (results / "ground_truth.jsonl").read_text().splitlines() if line.strip()]
+    if args.only:
+        keep = {n for n in args.only.split(",") if n}
+        truth = [t for t in truth if t["name"] in keep]
     has_baselines = any((results / "baselines" / f"{t['name']}.json").exists() for t in truth)
 
     evaluated = []

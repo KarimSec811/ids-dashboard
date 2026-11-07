@@ -12,4 +12,4 @@ rm -rf "$OUT"
 python3 "$HERE/run_lab.py" --victim 10.77.0.10 --iface veth-a --out "$OUT" \
     --sweep-start 10.77.0.100 --sweep-end 10.77.0.199 "$@"
 "$HERE/netns_lab.sh" down >/dev/null 2>&1; trap - EXIT
-python3 "$HERE/evaluate.py" --results "$OUT" --out "${EVAL_MD:-$ROOT/docs/EVALUATION.md}"
+python3 "$HERE/evaluate.py" --results "$OUT" --config "${EVAL_CFG:-$ROOT/config.json}" --out "${EVAL_MD:-$ROOT/docs/EVALUATION.md}"
