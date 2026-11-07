@@ -1,57 +1,937 @@
 {
+  "thresholds": {
+    "neptune": {
+      "protocol_types": [
+        "tcp"
+      ],
+      "flags": [
+        "REJ",
+        "RSTO",
+        "S0"
+      ],
+      "zero_fields": [
+        "duration",
+        "src_bytes",
+        "logged_in"
+      ],
+      "ranges": {
+        "count": [
+          3.0,
+          299.0
+        ],
+        "diff_srv_rate": [
+          0.0,
+          0.5
+        ],
+        "srv_count": [
+          1.0,
+          25.0
+        ],
+        "srv_diff_host_rate": [
+          0.0,
+          0.07
+        ],
+        "hot": [
+          0.0,
+          0.0
+        ]
+      },
+      "_validation": {
+        "fit_on": "KDDTrain+",
+        "scored_on": "KDDTest+ (held out)",
+        "fit": {
+          "n": 41214,
+          "recall": 0.988,
+          "precision": 0.994,
+          "fires_on_normal": 208,
+          "normal_fp_rate": 0.00309
+        },
+        "held_out": {
+          "n": 4657,
+          "recall": 0.997,
+          "precision": 0.95,
+          "fires_on_normal": 0,
+          "normal_fp_rate": 0.0
+        }
+      },
+      "enabled": true
+    },
+    "portsweep": {
+      "protocol_types": [
+        "tcp"
+      ],
+      "flags": [
+        "OTH",
+        "REJ",
+        "RSTO",
+        "RSTOS0",
+        "RSTR",
+        "S0"
+      ],
+      "zero_fields": [
+        "srv_diff_host_rate"
+      ],
+      "ranges": {
+        "srv_count": [
+          1.0,
+          3.0
+        ],
+        "serror_rate": [
+          0.0,
+          0.8
+        ],
+        "count": [
+          1.0,
+          434.35
+        ],
+        "dst_bytes": [
+          0.0,
+          0.0
+        ],
+        "logged_in": [
+          0.0,
+          0.0
+        ]
+      },
+      "_validation": {
+        "fit_on": "KDDTrain+",
+        "scored_on": "KDDTest+ (held out)",
+        "fit": {
+          "n": 2931,
+          "recall": 0.99,
+          "precision": 0.199,
+          "fires_on_normal": 2269,
+          "normal_fp_rate": 0.03369
+        },
+        "held_out": {
+          "n": 157,
+          "recall": 0.994,
+          "precision": 0.037,
+          "fires_on_normal": 61,
+          "normal_fp_rate": 0.00628
+        }
+      },
+      "enabled": false,
+      "_why_disabled": "needs evidence across many connections; the failed-probe detectors do this properly"
+    },
+    "satan": {
+      "protocol_types": [
+        "tcp",
+        "udp"
+      ],
+      "flags": [
+        "REJ",
+        "S0",
+        "SF"
+      ],
+      "zero_fields": [
+        "hot",
+        "srv_diff_host_rate"
+      ],
+      "ranges": {
+        "src_bytes": [
+          0.0,
+          39.0
+        ],
+        "serror_rate": [
+          0.0,
+          0.2684
+        ],
+        "wrong_fragment": [
+          0.0,
+          0.0
+        ],
+        "dst_bytes": [
+          0.0,
+          186.0
+        ]
+      },
+      "_validation": {
+        "fit_on": "KDDTrain+",
+        "scored_on": "KDDTest+ (held out)",
+        "fit": {
+          "n": 3633,
+          "recall": 0.974,
+          "precision": 0.26,
+          "fires_on_normal": 3444,
+          "normal_fp_rate": 0.05114
+        },
+        "held_out": {
+          "n": 735,
+          "recall": 0.996,
+          "precision": 0.128,
+          "fires_on_normal": 339,
+          "normal_fp_rate": 0.03491
+        }
+      },
+      "enabled": false,
+      "_why_disabled": "needs evidence across many connections; the failed-probe detectors do this properly"
+    },
+    "ipsweep": {
+      "protocol_types": [
+        "icmp",
+        "tcp"
+      ],
+      "services": [
+        "domain",
+        "eco_i",
+        "ecr_i",
+        "finger",
+        "ftp",
+        "ftp_data",
+        "gopher",
+        "link",
+        "mtp",
+        "private",
+        "smtp",
+        "ssh",
+        "telnet",
+        "time"
+      ],
+      "flags": [
+        "REJ",
+        "SF"
+      ],
+      "zero_fields": [
+        "hot",
+        "num_compromised",
+        "num_root",
+        "serror_rate",
+        "diff_srv_rate"
+      ],
+      "ranges": {
+        "src_bytes": [
+          0.0,
+          18.0
+        ],
+        "dst_bytes": [
+          0.0,
+          84.0
+        ],
+        "count": [
+          1.0,
+          1.0
+        ]
+      },
+      "_validation": {
+        "fit_on": "KDDTrain+",
+        "scored_on": "KDDTest+ (held out)",
+        "fit": {
+          "n": 3599,
+          "recall": 0.978,
+          "precision": 0.694,
+          "fires_on_normal": 496,
+          "normal_fp_rate": 0.00737
+        },
+        "held_out": {
+          "n": 141,
+          "recall": 1.0,
+          "precision": 0.147,
+          "fires_on_normal": 83,
+          "normal_fp_rate": 0.00855
+        }
+      },
+      "enabled": false,
+      "_why_disabled": "needs evidence across many connections; the failed-probe detectors do this properly"
+    },
+    "smurf": {
+      "protocol_types": [
+        "icmp"
+      ],
+      "services": [
+        "ecr_i"
+      ],
+      "flags": [
+        "SF"
+      ],
+      "zero_fields": [
+        "wrong_fragment"
+      ],
+      "ranges": {
+        "src_bytes": [
+          520.0,
+          1032.0
+        ],
+        "count": [
+          10,
+          100000
+        ],
+        "srv_count": [
+          10,
+          100000
+        ]
+      },
+      "_validation": {
+        "fit_on": "KDDTrain+",
+        "scored_on": "KDDTest+ (held out)",
+        "fit": {
+          "n": 2646,
+          "recall": 0.987,
+          "precision": 1.0,
+          "fires_on_normal": 0,
+          "normal_fp_rate": 0.0
+        },
+        "held_out": {
+          "n": 665,
+          "recall": 0.881,
+          "precision": 1.0,
+          "fires_on_normal": 0,
+          "normal_fp_rate": 0.0
+        }
+      },
+      "enabled": true
+    },
+    "back": {
+      "protocol_types": [
+        "tcp"
+      ],
+      "services": [
+        "http"
+      ],
+      "flags": [
+        "RSTR",
+        "SF"
+      ],
+      "zero_fields": [],
+      "ranges": {
+        "src_bytes": [
+          16824.2,
+          54540.0
+        ]
+      },
+      "_validation": {
+        "fit_on": "KDDTrain+",
+        "scored_on": "KDDTest+ (held out)",
+        "fit": {
+          "n": 956,
+          "recall": 0.987,
+          "precision": 0.999,
+          "fires_on_normal": 1,
+          "normal_fp_rate": 1e-05
+        },
+        "held_out": {
+          "n": 359,
+          "recall": 0.989,
+          "precision": 0.924,
+          "fires_on_normal": 5,
+          "normal_fp_rate": 0.00051
+        }
+      },
+      "enabled": false,
+      "_why_disabled": "reduces to 'an HTTP request of 17-55 KB', which a legitimate upload also is"
+    },
+    "teardrop": {
+      "protocol_types": [
+        "udp"
+      ],
+      "services": [
+        "private"
+      ],
+      "flags": [
+        "SF"
+      ],
+      "zero_fields": [
+        "duration",
+        "dst_bytes"
+      ],
+      "ranges": {
+        "src_bytes": [
+          28.0,
+          28.0
+        ]
+      },
+      "_validation": {
+        "fit_on": "KDDTrain+",
+        "scored_on": "KDDTest+ (held out)",
+        "fit": {
+          "n": 892,
+          "recall": 0.998,
+          "precision": 1.0,
+          "fires_on_normal": 0,
+          "normal_fp_rate": 0.0
+        },
+        "held_out": {
+          "n": 12,
+          "recall": 1.0,
+          "precision": 0.25,
+          "fires_on_normal": 36,
+          "normal_fp_rate": 0.00371
+        }
+      },
+      "enabled": false,
+      "_why_disabled": "overlapping-fragment attack; needs IP reassembly, which the sensor does not do"
+    },
+    "warezclient": {
+      "protocol_types": [
+        "tcp"
+      ],
+      "services": [
+        "ftp",
+        "ftp_data"
+      ],
+      "flags": [
+        "SF"
+      ],
+      "zero_fields": [
+        "num_root",
+        "num_file_creations"
+      ],
+      "ranges": {
+        "count": [
+          1.0,
+          2.0
+        ],
+        "logged_in": [
+          1.0,
+          1.0
+        ],
+        "dst_bytes": [
+          0.0,
+          2453.0
+        ],
+        "src_bytes": [
+          30.0,
+          5135678.0
+        ],
+        "srv_count": [
+          1.0,
+          3.0
+        ],
+        "num_access_files": [
+          0.0,
+          0.0
+        ]
+      },
+      "_validation": {
+        "fit_on": "KDDTrain+",
+        "scored_on": "KDDTest+ (held out)",
+        "fit": {
+          "n": 890,
+          "recall": 0.991,
+          "precision": 0.237,
+          "fires_on_normal": 2835,
+          "normal_fp_rate": 0.0421
+        },
+        "held_out": {
+          "n": 0,
+          "recall": null,
+          "precision": 0.0,
+          "fires_on_normal": 37,
+          "normal_fp_rate": 0.00381
+        }
+      },
+      "enabled": false,
+      "_why_disabled": "absent from the held-out data, so it cannot be validated"
+    },
+    "pod": {
+      "protocol_types": [
+        "icmp"
+      ],
+      "services": [
+        "ecr_i",
+        "tim_i"
+      ],
+      "flags": [
+        "SF"
+      ],
+      "zero_fields": [],
+      "ranges": {
+        "srv_count": [
+          1.0,
+          20.0
+        ],
+        "src_bytes": [
+          564.0,
+          1480.0
+        ]
+      },
+      "_validation": {
+        "fit_on": "KDDTrain+",
+        "scored_on": "KDDTest+ (held out)",
+        "fit": {
+          "n": 201,
+          "recall": 1.0,
+          "precision": 0.091,
+          "fires_on_normal": 4,
+          "normal_fp_rate": 6e-05
+        },
+        "held_out": {
+          "n": 41,
+          "recall": 1.0,
+          "precision": 0.07,
+          "fires_on_normal": 16,
+          "normal_fp_rate": 0.00165
+        }
+      },
+      "enabled": false,
+      "_why_disabled": "oversize/fragment heuristics cannot separate it from normal traffic; real detection needs IP reassembly"
+    },
+    "guess_passwd": {
+      "protocol_types": [
+        "tcp"
+      ],
+      "services": [
+        "ftp",
+        "telnet",
+        "pop_3",
+        "pop_2",
+        "imap4",
+        "login",
+        "shell"
+      ],
+      "zero_fields": [],
+      "ranges": {
+        "num_failed_logins": [
+          3,
+          100000
+        ]
+      },
+      "_note": "hand-written: >= 3 server-confirmed failed logins on one connection of a cleartext login service",
+      "_validation": {
+        "fit_on": "random half of KDDTest+",
+        "scored_on": "the other half of KDDTest+",
+        "fit": {
+          "n": 610,
+          "recall": 0.0,
+          "precision": 0.0,
+          "fires_on_normal": 3,
+          "normal_fp_rate": 0.00061
+        },
+        "held_out": {
+          "n": 621,
+          "recall": 0.0,
+          "precision": null,
+          "fires_on_normal": 0,
+          "normal_fp_rate": 0.0
+        }
+      },
+      "enabled": true
+    },
+    "mscan": {
+      "protocol_types": [
+        "tcp"
+      ],
+      "services": [
+        "imap4",
+        "pm_dump",
+        "pop_3",
+        "sunrpc",
+        "telnet"
+      ],
+      "flags": [
+        "REJ",
+        "RSTO",
+        "S0",
+        "SF"
+      ],
+      "zero_fields": [
+        "hot",
+        "num_failed_logins",
+        "num_compromised"
+      ],
+      "ranges": {
+        "duration": [
+          0.0,
+          7.54
+        ],
+        "count": [
+          1.0,
+          5.0
+        ],
+        "src_bytes": [
+          0.0,
+          44.0
+        ]
+      },
+      "_validation": {
+        "fit_on": "random half of KDDTest+",
+        "scored_on": "the other half of KDDTest+",
+        "fit": {
+          "n": 493,
+          "recall": 0.99,
+          "precision": 0.513,
+          "fires_on_normal": 1,
+          "normal_fp_rate": 0.0002
+        },
+        "held_out": {
+          "n": 503,
+          "recall": 0.99,
+          "precision": 0.513,
+          "fires_on_normal": 2,
+          "normal_fp_rate": 0.00041
+        }
+      },
+      "enabled": false,
+      "_why_disabled": "occurs only in KDDTest+ and has no live equivalent that could be tested"
+    },
+    "processtable": {
+      "protocol_types": [
+        "tcp"
+      ],
+      "services": [
+        "telnet"
+      ],
+      "flags": [
+        "S2",
+        "S3",
+        "SF"
+      ],
+      "zero_fields": [
+        "urgent",
+        "hot",
+        "num_failed_logins",
+        "logged_in"
+      ],
+      "ranges": {
+        "dst_bytes": [
+          15.0,
+          44.0
+        ],
+        "src_bytes": [
+          0.0,
+          1.0
+        ],
+        "srv_count": [
+          1.0,
+          17.59
+        ]
+      },
+      "_validation": {
+        "fit_on": "random half of KDDTest+",
+        "scored_on": "the other half of KDDTest+",
+        "fit": {
+          "n": 348,
+          "recall": 0.994,
+          "precision": 0.991,
+          "fires_on_normal": 0,
+          "normal_fp_rate": 0.0
+        },
+        "held_out": {
+          "n": 337,
+          "recall": 1.0,
+          "precision": 0.994,
+          "fires_on_normal": 0,
+          "normal_fp_rate": 0.0
+        }
+      },
+      "enabled": false,
+      "_why_disabled": "occurs only in KDDTest+ and has no live equivalent that could be tested"
+    }
+  },
   "interface": "lo",
-  "capture_bpf": null,
-  "sampling_rate": 1,
-  "portsweep_port_threshold": 5,
-  "ipsweep_host_threshold": 5,
-  "alerts_db_path": "data/alerts.db",
-  "flows_db_path": "data/flows.db",
-  "ioc_list_path": "data/ioc.txt",
   "detection": {
     "match_threshold": 0.95,
     "half_open_grace_seconds": 2.0,
-    "half_open_min_count": 10
+    "half_open_min_count": 10,
+    "portsweep_port_threshold": 20,
+    "ipsweep_host_threshold": 20,
+    "recon_window_seconds": 10.0,
+    "slow_scan_window_seconds": 300.0,
+    "slow_scan_port_threshold": 15,
+    "slow_scan_host_threshold": 25,
+    "alert_cooldown_seconds": 30.0
   },
+  "geoip_db_path": null,
+  "ioc_list_path": "data/ioc.txt",
+  "alerts_db_path": "data/alerts.db",
+  "capture_bpf": null,
+  "sampling_rate": 1,
+  "capture_packet_limit": 200,
+  "capture_timeout_seconds": 10,
   "threat_intel": {
-    "neptune": {"severity": "high"},
-    "portsweep": {"severity": "medium"}
-  },
-  "thresholds": {
     "neptune": {
-      "protocol_types": ["tcp"],
-      "flags": ["S0", "REJ", "RSTO"],
-      "zero_fields": ["duration", "src_bytes", "dst_bytes", "land", "wrong_fragment", "urgent", "hot",
-                      "num_failed_logins", "logged_in", "num_compromised", "root_shell"],
-      "ranges": {
-        "count": [1, 302], "srv_count": [1, 150],
-        "serror_rate": [0, 1], "srv_serror_rate": [0, 1], "rerror_rate": [0, 1], "srv_rerror_rate": [0, 1],
-        "same_srv_rate": [0, 1], "diff_srv_rate": [0, 1], "srv_diff_host_rate": [0, 1],
-        "dst_host_count": [1, 255], "dst_host_srv_count": [1, 255],
-        "dst_host_same_srv_rate": [0, 1], "dst_host_diff_srv_rate": [0, 1],
-        "dst_host_same_src_port_rate": [0, 1], "dst_host_srv_diff_host_rate": [0, 1],
-        "dst_host_serror_rate": [0, 1], "dst_host_srv_serror_rate": [0, 1],
-        "dst_host_rerror_rate": [0, 1], "dst_host_srv_rerror_rate": [0, 1]
+      "display_name": "Neptune (SYN Flood)",
+      "severity": "high",
+      "mitre": {
+        "technique_id": "T1499.001",
+        "technique_name": "Endpoint Denial of Service: OS Exhaustion Flood",
+        "tactic": "Impact"
+      },
+      "description": "A high rate of half-open TCP connections aimed at one host, typical of a SYN-flood resource-exhaustion attack.",
+      "recommendation": [
+        "Enable SYN cookies on the target host",
+        "Rate-limit inbound SYN packets at the perimeter",
+        "Inspect firewall/connection-table logs for the source"
+      ],
+      "red_team": {
+        "objective": "Denial of service -- exhaust the target's connection table",
+        "common_tools": [
+          "hping3",
+          "nmap --scan-flags SYN (at volume)"
+        ],
+        "related_telemetry": [
+          "Firewall connection-table exhaustion alerts",
+          "Zeek conn.log elevated S0-state ratio"
+        ]
+      }
+    },
+    "portsweep": {
+      "display_name": "Port Sweep",
+      "severity": "medium",
+      "mitre": {
+        "technique_id": "T1046",
+        "technique_name": "Network Service Discovery",
+        "tactic": "Discovery"
+      },
+      "description": "One source touching many distinct ports on a single host in a short window -- reconnaissance to enumerate open services.",
+      "recommendation": [
+        "Rate-limit or temporarily block the source IP",
+        "Review which scanned services are actually meant to be exposed"
+      ],
+      "red_team": {
+        "objective": "Reconnaissance -- enumerate open services",
+        "common_tools": [
+          "Nmap (-sS/-p-)",
+          "Masscan"
+        ],
+        "related_telemetry": [
+          "Firewall deny logs across many ports from one source"
+        ]
+      }
+    },
+    "satan": {
+      "display_name": "SATAN Probe",
+      "severity": "medium",
+      "mitre": {
+        "technique_id": "T1595.002",
+        "technique_name": "Active Scanning: Vulnerability Scanning",
+        "tactic": "Reconnaissance"
+      },
+      "description": "Traffic matching a SATAN-style scanner signature -- broad probing across services.",
+      "recommendation": [
+        "Restrict scanning tools to authorized management networks",
+        "Patch reachable services the scan identified"
+      ],
+      "red_team": {
+        "objective": "Identify vulnerable services for follow-on exploitation",
+        "common_tools": [
+          "Nessus",
+          "OpenVAS",
+          "Nmap -sV/-A"
+        ],
+        "related_telemetry": [
+          "Vulnerability-scanner signature hits"
+        ]
+      }
+    },
+    "ipsweep": {
+      "display_name": "IP Sweep",
+      "severity": "medium",
+      "mitre": {
+        "technique_id": "T1018",
+        "technique_name": "Remote System Discovery",
+        "tactic": "Discovery"
+      },
+      "description": "One source touching many distinct destination hosts in a short window -- host-discovery sweep.",
+      "recommendation": [
+        "Rate-limit ICMP/connection attempts at the perimeter",
+        "Segment networks to limit sweep visibility"
+      ],
+      "red_team": {
+        "objective": "Map live hosts before targeting them",
+        "common_tools": [
+          "Nmap -sn",
+          "fping",
+          "Angry IP Scanner"
+        ],
+        "related_telemetry": [
+          "ICMP echo requests to many sequential addresses"
+        ]
       }
     },
     "smurf": {
-      "protocol_types": ["icmp"],
-      "services": ["ecr_i"],
-      "flags": ["SF"],
-      "zero_fields": ["duration", "dst_bytes", "land", "wrong_fragment", "urgent", "hot", "logged_in"],
-      "ranges": {"src_bytes": [400, 1100], "count": [2, 511], "srv_count": [2, 511],
-                 "same_srv_rate": [0.9, 1]}
+      "display_name": "Smurf (ICMP Amplification)",
+      "severity": "high",
+      "mitre": {
+        "technique_id": "T1498.002",
+        "technique_name": "Network Denial of Service: Reflection Amplification",
+        "tactic": "Impact"
+      },
+      "description": "A large volume of unsolicited ICMP echo replies from many sources converging on one victim -- spoofed-source amplification flood.",
+      "recommendation": [
+        "Disable IP-directed broadcast on routers",
+        "Apply ingress/egress filtering (BCP38)",
+        "Rate-limit ICMP at the perimeter"
+      ],
+      "red_team": {
+        "objective": "DoS via amplification using reflected traffic",
+        "common_tools": [
+          "Classic smurf tooling",
+          "Custom ICMP spoofers"
+        ],
+        "related_telemetry": [
+          "High-volume unsolicited ICMP echo-reply traffic"
+        ]
+      }
+    },
+    "back": {
+      "display_name": "Back (HTTP DoS)",
+      "severity": "medium",
+      "mitre": {
+        "technique_id": "T1499.003",
+        "technique_name": "Endpoint Denial of Service: Application Exhaustion Flood",
+        "tactic": "Impact"
+      },
+      "description": "Traffic consistent with the 'back' attack -- crafted, expensive HTTP requests intended to exhaust a web server.",
+      "recommendation": [
+        "Enforce request URL/path length limits",
+        "Add a WAF rule for the offending pattern"
+      ],
+      "red_team": {
+        "objective": "Exhaust web server workers with expensive requests",
+        "common_tools": [
+          "Custom long-path request scripts",
+          "Slowloris-style tools"
+        ],
+        "related_telemetry": [
+          "Web server logs with abnormally long URLs"
+        ]
+      }
     },
     "teardrop": {
-      "protocol_types": ["udp"],
-      "zero_fields": ["duration", "dst_bytes", "land", "urgent", "hot", "logged_in"],
-      "ranges": {"wrong_fragment": [1, 3], "src_bytes": [0, 1500]}
+      "display_name": "Teardrop",
+      "severity": "medium",
+      "mitre": {
+        "technique_id": "T1499.004",
+        "technique_name": "Endpoint Denial of Service: Application or System Exploitation",
+        "tactic": "Impact"
+      },
+      "description": "Overlapping, malformed IP fragments consistent with the classic teardrop attack.",
+      "recommendation": [
+        "Drop malformed/overlapping fragments at the firewall",
+        "Confirm OS/network stack is patched"
+      ],
+      "red_team": {
+        "objective": "Crash/hang a target via malformed fragment reassembly",
+        "common_tools": [
+          "Historical teardrop tooling",
+          "Scapy-crafted overlapping fragments"
+        ],
+        "related_telemetry": [
+          "IP fragments with invalid/overlapping offsets"
+        ]
+      }
+    },
+    "warezclient": {
+      "display_name": "Warez Client Activity",
+      "severity": "low",
+      "mitre": {
+        "technique_id": "T1048.003",
+        "technique_name": "Exfiltration Over Alternative Protocol: Exfiltration Over Unencrypted Non-C2 Protocol",
+        "tactic": "Exfiltration"
+      },
+      "description": "Traffic pattern consistent with unauthorized bulk file transfer -- policy violation, possible compromised-host indicator.",
+      "recommendation": [
+        "Block known warez-associated hosts",
+        "Restrict outbound FTP from general user segments"
+      ],
+      "red_team": {
+        "objective": "Unauthorized file distribution / staging",
+        "common_tools": [
+          "Scripted FTP clients",
+          "Automated download bots"
+        ],
+        "related_telemetry": [
+          "High-volume FTP RETR sessions"
+        ]
+      }
+    },
+    "pod": {
+      "display_name": "Ping of Death",
+      "severity": "medium",
+      "mitre": {
+        "technique_id": "T1499.004",
+        "technique_name": "Endpoint Denial of Service: Application or System Exploitation",
+        "tactic": "Impact"
+      },
+      "description": "An oversized/malformed ICMP packet consistent with the classic 'ping of death'.",
+      "recommendation": [
+        "Drop oversized/malformed ICMP at the firewall",
+        "Confirm OS network stack is patched"
+      ],
+      "red_team": {
+        "objective": "Destabilize a target via malformed oversized ICMP",
+        "common_tools": [
+          "Historical ping-of-death tools"
+        ],
+        "related_telemetry": [
+          "ICMP packets exceeding standard datagram size"
+        ]
+      }
     },
     "guess_passwd": {
-      "protocol_types": ["tcp"],
-      "services": ["ftp", "telnet", "pop_3"],
-      "flags": ["SF", "S1", "S2", "S3"],
-      "zero_fields": ["land", "wrong_fragment", "urgent"],
-      "ranges": {"num_failed_logins": [1, 10], "logged_in": [0, 0]}
+      "display_name": "Password Guessing",
+      "severity": "high",
+      "mitre": {
+        "technique_id": "T1110.001",
+        "technique_name": "Brute Force: Password Guessing",
+        "tactic": "Credential Access"
+      },
+      "description": "Repeated failed authentication attempts against a login service.",
+      "recommendation": [
+        "Enforce account lockout / login rate-limiting",
+        "Require MFA on the targeted service"
+      ],
+      "red_team": {
+        "objective": "Obtain valid credentials via repeated guessing",
+        "common_tools": [
+          "Hydra",
+          "Medusa",
+          "ncrack"
+        ],
+        "related_telemetry": [
+          "Repeated failed-auth events in auth logs"
+        ]
+      }
+    },
+    "mscan": {
+      "display_name": "Mscan (Mass Scan)",
+      "severity": "medium",
+      "mitre": {
+        "technique_id": "T1595.002",
+        "technique_name": "Active Scanning: Vulnerability Scanning",
+        "tactic": "Reconnaissance"
+      },
+      "description": "Very broad, high-fan-out scanning across hosts and services.",
+      "recommendation": [
+        "Rate-limit or blackhole aggressive scanners",
+        "Cross-check against threat-intel scanner block lists"
+      ],
+      "red_team": {
+        "objective": "Identify exploitable targets at scale",
+        "common_tools": [
+          "Masscan",
+          "ZMap"
+        ],
+        "related_telemetry": [
+          "Very high fan-out across hosts and ports"
+        ]
+      }
+    },
+    "processtable": {
+      "display_name": "Process Table Exhaustion",
+      "severity": "high",
+      "mitre": {
+        "technique_id": "T1499.001",
+        "technique_name": "Endpoint Denial of Service: OS Exhaustion Flood",
+        "tactic": "Impact"
+      },
+      "description": "Rapid, repeated connection attempts consistent with exhausting the target's OS process table.",
+      "recommendation": [
+        "Enforce per-source connection-rate limits",
+        "Apply OS-level resource limits on spawned processes"
+      ],
+      "red_team": {
+        "objective": "Exhaust OS process table via rapid connection spawning",
+        "common_tools": [
+          "Custom connection-flood scripts"
+        ],
+        "related_telemetry": [
+          "Rapid process-spawn/PID-exhaustion alerts"
+        ]
+      }
     }
-  }
+  },
+  "flows_db_path": "data/flows.db",
+  "reverse_dns": "private"
 }

@@ -139,10 +139,12 @@ def test_orientation():
 # --------------------------------------------------------------------------
 
 def test_signatures_drop_conditions_that_cannot_fail():
-    neptune = next(s for s in compile_signatures(CONFIG["thresholds"]) if s.name == "neptune")
+    legacy = {"neptune": {"protocol_types": ["tcp"], "flags": ["S0"], "zero_fields": ["duration"],
+                          "ranges": {"count": [1, 302], "serror_rate": [0, 1], "same_srv_rate": [0, 1],
+                                     "dst_host_count": [1, 255], "dst_host_srv_diff_host_rate": [0, 0.5]}}}
+    neptune = next(s for s in compile_signatures(legacy) if s.name == "neptune")
     fields = {f for f, _, _ in neptune.ranges}
-    assert "serror_rate" not in fields and "same_srv_rate" not in fields   # [0,1] rates
-    assert "count" not in fields                                           # count >= 1 always true
+    assert fields == {"dst_host_srv_diff_host_rate"}      # [0,1] rates, count >= 1 and a capped window cannot fail
 
 
 def test_bigger_flood_is_not_scored_as_smaller():
@@ -250,14 +252,16 @@ def test_client_using_several_ports_successfully_is_not_a_scan():
 
 
 def test_ip_sweep_matures_after_grace_period():
-    pk = [tcp(1000.0 + i * 0.1, "10.0.0.66", 55000 + i, f"10.0.1.{i + 1}", 445, SYN) for i in range(30)]
+    pk = [tcp(1000.0 + i * 0.1, "10.0.0.66", 55000 + i, f"10.0.1.{i + 1}", 445, SYN) for i in range(60)]
     _, early = run(pk[:15])                          # 1.4 s of SYNs: nothing has outlived the grace period
     assert early.new_alerts == []
-    _, sink = run(pk)                                # 2.9 s: the earliest probes have matured mid-sweep
+    _, sink = run(pk)                                # 5.9 s: 20 probes have matured while the sweep is still running
     assert [a["outcome"] for a in sink.new_alerts] == ["ipsweep"]
     assert sink.new_alerts[0]["src_ip"] == "10.0.0.66"
-    tail = pk + [tcp(1010.0, "10.0.0.66", 56000, "10.0.1.200", 445, SYN)]   # sweep ends, time moves on
-    analyzer, sink = run(tail)
+    tail = tcp(1010.0, "10.0.0.66", 56000, "10.0.1.200", 445, SYN)           # the sweep ended; time moves on
+    _, below = run(pk[:15] + [tail])
+    assert below.new_alerts == []                    # 15 hosts: under the 20-host threshold even after maturing
+    _, sink = run(pk[:30] + [tail])
     assert [a["outcome"] for a in sink.new_alerts] == ["ipsweep"]
 
 
@@ -289,7 +293,9 @@ def test_state_stays_bounded_under_a_long_spoofed_flood():
                                     rnd.randint(1024, 65000), "10.0.0.5", 80, SYN))
     assert analyzer.active_flows < 3000
     stats = analyzer.tracker.stats()
-    assert stats["records"] < 6000 and stats["recon_sources"] < 6000 and stats["host_windows"] <= 2
+    assert stats["records"] < 6000 and stats["host_windows"] <= 2
+    # each spoofed source legitimately holds one failed probe for the 5-minute window; the cap bounds it
+    assert stats["recon_sources"] <= analyzer.tracker.MAX_TRACKED_SOURCES
 
 
 def test_flow_sampling_is_per_connection_not_per_packet():
@@ -411,6 +417,84 @@ def test_flow_store_log_and_retention(tmp_path):
     rows = store.recent(100)
     assert len(rows) == 5 and rows[0]["flow_id"] == "f9"
     assert all(r["outcome"] == "neptune" for r in store.recent(100, outcome="neptune"))
+
+
+# --------------------------------------------------------------------------
+# two-window sweep detection, per-port address scans, signature quality
+# --------------------------------------------------------------------------
+
+def refused(ts, src, sport, dst, dport):
+    return [tcp(ts, src, sport, dst, dport, SYN), tcp(ts + 0.001, dst, dport, src, sport, RST | ACK)]
+
+
+def icmp(ts, src, dst, icmp_type, size):
+    data = ":".join(["61"] * size)
+    return SimpleNamespace(sniff_time=datetime.fromtimestamp(ts), ip=SimpleNamespace(src=src, dst=dst),
+                           icmp=SimpleNamespace(type=str(icmp_type), data=SimpleNamespace(data=data)))
+
+
+def test_slow_scan_is_caught_by_the_five_minute_window():
+    pk = []
+    for i in range(20):                              # one refused probe every 15 s: the pace of nmap -T1
+        pk += refused(1000.0 + i * 15, "10.0.0.66", 54000 + i, "10.0.0.5", 100 + i)
+    _, sink = run(pk)
+    assert [a["outcome"] for a in sink.new_alerts] == ["portsweep"]
+    assert "300s" in " ".join(sink.new_alerts[0]["reasons"])
+
+
+def test_a_scan_below_the_slow_threshold_is_not_reported():
+    pk = []
+    for i in range(10):                              # 10 ports in 150 s: under Zeek-style 15 per 5 minutes
+        pk += refused(1000.0 + i * 15, "10.0.0.66", 54000 + i, "10.0.0.5", 100 + i)
+    _, sink = run(pk)
+    assert sink.new_alerts == []
+
+
+def test_address_scan_means_many_hosts_on_ONE_port():
+    scattered = []                                   # peer-to-peer style: 30 hosts, a different port each
+    for i in range(30):
+        scattered += refused(1000.0 + i * 0.05, "10.0.0.20", 50000 + i, f"10.0.1.{i + 1}", 6000 + i)
+    _, none = run(scattered)
+    assert none.new_alerts == []
+    sweep = []
+    for i in range(30):                              # the same 30 hosts, all on port 22
+        sweep += refused(1000.0 + i * 0.05, "10.0.0.20", 50000 + i, f"10.0.1.{i + 1}", 22)
+    _, sink = run(sweep)
+    assert [a["outcome"] for a in sink.new_alerts] == ["ipsweep"]
+
+
+def test_disabled_signatures_are_not_compiled():
+    thr = {"pod": {"enabled": False, "protocol_types": ["icmp"]}, "smurf": {"protocol_types": ["icmp"]}}
+    assert [s.name for s in compile_signatures(thr)] == ["smurf"]
+    assert [n for n, s in CONFIG["thresholds"].items() if s.get("enabled", True)] == ["neptune", "smurf", "guess_passwd"]
+
+
+def test_ordinary_pings_raise_nothing():
+    """The original config's `pod` signature fired on every ping, including a 1 packet/s heartbeat."""
+    pk = []
+    for i in range(60):
+        pk += [icmp(1000.0 + i, "10.0.0.66", "10.0.0.5", 8, 56), icmp(1000.0 + i + 0.001, "10.0.0.5", "10.0.0.66", 0, 56)]
+    _, sink = run(pk)
+    assert sink.new_alerts == []
+
+
+def _icmp_features(**kw):
+    base = {"protocol_type": "ICMP", "service": "ecr_i", "flag": "SF", "duration": 0.0, "src_bytes": 600, "dst_bytes": 0,
+            "wrong_fragment": 0, "count": 1, "srv_count": 1, "half_open": 0}
+    return {**base, **kw}
+
+
+def test_one_large_ping_is_not_smurf_but_an_amplification_burst_is():
+    assert classify_detail(_icmp_features(), CONFIG["thresholds"], 0.95)[0] == "normal"
+    assert classify_detail(_icmp_features(count=300, srv_count=300), CONFIG["thresholds"], 0.95)[0] == "smurf"
+
+
+def test_guess_passwd_needs_three_failed_logins():
+    ftp = {"protocol_type": "TCP", "service": "ftp", "flag": "SF", "duration": 1.0, "src_bytes": 60, "dst_bytes": 200,
+           "num_failed_logins": 0, "count": 1, "srv_count": 1}
+    assert classify_detail(ftp, CONFIG["thresholds"], 0.95)[0] == "normal"
+    assert classify_detail({**ftp, "num_failed_logins": 1}, CONFIG["thresholds"], 0.95)[0] == "normal"   # a typo
+    assert classify_detail({**ftp, "num_failed_logins": 3}, CONFIG["thresholds"], 0.95)[0] == "guess_passwd"
 
 
 if __name__ == "__main__":
