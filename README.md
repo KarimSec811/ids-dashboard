@@ -9,7 +9,7 @@ A network intrusion-detection sensor that tracks **TCP connection state** instea
 
 <!-- Add a 10-20 s screen recording here once recorded:  ![Dashboard replaying a SYN flood, a port scan and an IP sweep](docs/demo.gif) -->
 
-## What it detects (for examples)
+## What it detects
 
 | Alert | ATT&CK | How it is decided |
 |---|---|---|
@@ -81,6 +81,14 @@ Choose `demo_mixed.pcap` under **Sample capture...** and click **Replay**. This 
 
 The demo PCAPs ship in `test_pcaps/`; regenerate them with `python tests/make_pcaps.py` (needs scapy).
 
+## Configuration and tuning
+
+`config.json` holds the interface, the detection thresholds and the signatures. Every number has a documented reason, and
+`python eval/lint_config.py` checks the file (unknown fields, contradictory rules, MITRE ids that do not match their names,
+thresholds below what TCP does on a healthy network). Three NSL-KDD-derived signatures ship enabled (`neptune`, `smurf`,
+`guess_passwd`); the others are kept, disabled, with the measured reason. See [docs/TUNING.md](docs/TUNING.md) for sources,
+profiles (sensitive / balanced / conservative) and how to tune on your own traffic.
+
 ## Security design
 
 - Binds to `127.0.0.1` by default. A non-loopback bind is refused unless `IDS_API_TOKEN` is set (or `IDS_ALLOW_INSECURE=1`).
@@ -126,7 +134,7 @@ API.md                  Socket.IO events, HTTP routes, alert/flow schemas
 ## Tests
 
 ```bash
-python tests/make_pcaps.py && python -m pytest tests -q      # 47 tests, ~40 s, needs tshark
+python tests/make_pcaps.py && python -m pytest tests -q      # 56 tests, ~40 s, needs tshark
 sudo eval/run_netns_lab.sh                                   # real attack tools in a virtual lab, ~10 min (Linux)
 ```
 
