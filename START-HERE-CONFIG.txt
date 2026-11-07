@@ -1,0 +1,10 @@
+Copy this folder over your repo (same paths). It REPLACES config.json (your interface, BPF, sampling and threat_intel text are kept;
+signatures and detection thresholds are new) and adds eval/kdd_check.py, eval/kdd_fit.py, eval/lint_config.py, docs/TUNING.md.
+
+1. python eval/lint_config.py config.json            -> 0 errors, 0 warnings
+2. python -m pytest tests -q                           -> 56 passed (needs tshark)
+3. Check "interface" in config.json is still your capture interface.
+4. docs/EVALUATION.md is from the PREVIOUS engine/config. Regenerate it:  sudo eval/run_netns_lab.sh   (Linux, ~20 min)
+5. If you already ran your VM lab: that run was scored with the OLD config. Do NOT re-score it with this one and tune.
+   Either quote it as "v1 config", or re-run it once on a fresh victim (e.g. Win10 with its firewall on).
+Rebuild the live demo afterwards:  python tools/build_demo.py
