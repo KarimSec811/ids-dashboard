@@ -1,6 +1,7 @@
 # Network IDS Dashboard
 
-[![CI](https://github.com/KarimSec811/ids-dashboard/ci.yml/badge.svg)](https://github.com/KarimSec811/ids-dashboard/actions/workflows/ci.yml)
+[![CI](https://github.com/KarimSec811/ids-dashboard/ci.yml)]
+(https://github.com/KarimSec811/ids-dashboard/actions/workflows/ci.yml)
 [![Live demo](https://img.shields.io/badge/live%20demo-open-2563eb)](https://karimsec811.github.io/ids-dashboard/demo/)
 
 A network intrusion-detection sensor that tracks **TCP connection state** instead of judging packets one by one, so a SYN flood, a port scan and an IP sweep each raise **one explainable alert** with ATT&CK mapping, evidence and a downloadable PCAP. It comes with a live dashboard, replayable demo captures, and an honest list of what it misses.
