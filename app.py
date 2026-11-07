@@ -304,7 +304,7 @@ flow_store: Optional[FlowStore] = (
     FlowStore(_flows_path, max_rows=int(settings.get("flows_max_rows", 500000)))
     if _flows_path else None)
 
-ioc_list = IocList(settings.resolve("ioc_list_path", "data/ioc.txt"))
+ioc_list = IocList(settings.resolve("ioc_list_path") or (BASE_DIR / "data" / "ioc.txt"))   # null means "default"
 enricher = Enricher(ioc_list, reverse_dns=str(settings.get("reverse_dns", "private")),
                     geoip_db_path=settings.get("geoip_db_path"))
 
