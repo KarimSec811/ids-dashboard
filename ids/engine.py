@@ -315,14 +315,65 @@ class ConnRecord:
         self.half_open = False  # handshake not completed (SYN flood signal)
 
 
-class _SrcRecon:
-    """Failed-probe history for one source address (bounded)."""
-    __slots__ = ('events', 'ports', 'hosts', 'pending', 'last_ts')
+class _ReconWindow:
+    """Failed probes of ONE source inside ONE time window (bounded)."""
+    __slots__ = ('events', 'ports', 'hosts_by_port')
 
     def __init__(self):
         self.events: Deque[Tuple[float, str, int]] = deque()
-        self.ports: Dict[str, Dict[int, int]] = {}
-        self.hosts: Dict[str, int] = {}
+        self.ports: Dict[str, Dict[int, int]] = {}             # victim -> {port: attempts}
+        self.hosts_by_port: Dict[int, Dict[str, int]] = {}     # port -> {victim: attempts}
+
+    def add(self, now: float, dst: str, port: int, cap: int) -> None:
+        self.events.append((now, dst, port))
+        p = self.ports.setdefault(dst, {})
+        p[port] = p.get(port, 0) + 1
+        h = self.hosts_by_port.setdefault(port, {})
+        h[dst] = h.get(dst, 0) + 1
+        if len(self.events) > cap:
+            self.drop_oldest()
+
+    def drop_oldest(self) -> None:
+        _, dst, port = self.events.popleft()
+        p = self.ports.get(dst)
+        if p is not None:
+            n = p.get(port, 0) - 1
+            if n <= 0:
+                p.pop(port, None)
+            else:
+                p[port] = n
+            if not p:
+                del self.ports[dst]
+        h = self.hosts_by_port.get(port)
+        if h is not None:
+            n = h.get(dst, 0) - 1
+            if n <= 0:
+                h.pop(dst, None)
+            else:
+                h[dst] = n
+            if not h:
+                del self.hosts_by_port[port]
+
+    def prune(self, now: float, seconds: float) -> None:
+        while self.events and now - self.events[0][0] > seconds:
+            self.drop_oldest()
+
+    def distinct_ports(self, dst: str) -> int:
+        return len(self.ports.get(dst, ()))
+
+    def max_hosts(self) -> int:
+        """Most distinct victims probed on any ONE port (Zeek's definition of an address scan)."""
+        return max((len(h) for h in self.hosts_by_port.values()), default=0)
+
+
+class _SrcRecon:
+    """Failed-probe history of one source address: a fast and a slow window, plus half-open probes
+    that have not yet outlived the grace period."""
+    __slots__ = ('fast', 'slow', 'pending', 'last_ts')
+
+    def __init__(self):
+        self.fast = _ReconWindow()
+        self.slow = _ReconWindow()
         self.pending: Deque[ConnRecord] = deque()
         self.last_ts = 0.0
 
@@ -352,12 +403,17 @@ class HostConnectionTracker:
     MAX_TRACKED_SOURCES = 20000
     MAX_RECORDS = 200000
 
-    def __init__(self, portsweep_port_threshold: int = 10, ipsweep_host_threshold: int = 10,
-                 recon_window_seconds: float = 10.0, probe_grace_seconds: float = 2.0):
+    def __init__(self, portsweep_port_threshold: int = 20, ipsweep_host_threshold: int = 20,
+                 recon_window_seconds: float = 10.0, probe_grace_seconds: float = 2.0,
+                 slow_window_seconds: float = 300.0, slow_port_threshold: int = 15,
+                 slow_host_threshold: int = 25):
         self.portsweep_port_threshold = int(portsweep_port_threshold)
         self.ipsweep_host_threshold = int(ipsweep_host_threshold)
         self.recon_window_seconds = float(recon_window_seconds)
         self.probe_grace_seconds = float(probe_grace_seconds)
+        self.slow_window_seconds = float(slow_window_seconds)
+        self.slow_port_threshold = int(slow_port_threshold)
+        self.slow_host_threshold = int(slow_host_threshold)
         self._records: Dict[str, ConnRecord] = {}
         self._win_dst: Dict[str, Deque[ConnRecord]] = {}
         self._win_srv: Dict[str, Deque[ConnRecord]] = {}
@@ -534,9 +590,9 @@ class HostConnectionTracker:
                 self._count_probe(r, rec, now)
 
     def drain_new_probes(self) -> List[ConnRecord]:
-        """Probes counted since the last call. Probes can mature long after
-        their last packet (half-open grace), so sweep verdicts are driven by
-        this queue, not only by the packet being processed."""
+        """Probes counted since the last call. Probes can mature long after their last packet
+        (half-open grace), so sweep verdicts are driven by this queue, not only by the packet
+        being processed."""
         out, self._new_probes = self._new_probes, []
         return out
 
@@ -544,34 +600,35 @@ class HostConnectionTracker:
         rec.counted = True
         if len(self._new_probes) < 5000:
             self._new_probes.append(rec)
-        r.events.append((now, rec.dst_ip, rec.dst_port))
-        ports = r.ports.setdefault(rec.dst_ip, {})
-        ports[rec.dst_port] = ports.get(rec.dst_port, 0) + 1
-        r.hosts[rec.dst_ip] = r.hosts.get(rec.dst_ip, 0) + 1
-        if len(r.events) > self.MAX_RECON_EVENTS:
-            self._drop_oldest(r)
-
-    def _drop_oldest(self, r: _SrcRecon) -> None:
-        _, dst, port = r.events.popleft()
-        ports = r.ports.get(dst)
-        if ports is not None:
-            left = ports.get(port, 0) - 1
-            if left <= 0:
-                ports.pop(port, None)
-            else:
-                ports[port] = left
-            if not ports:
-                del r.ports[dst]
-        left = r.hosts.get(dst, 0) - 1
-        if left <= 0:
-            r.hosts.pop(dst, None)
-        else:
-            r.hosts[dst] = left
+        r.fast.add(now, rec.dst_ip, rec.dst_port, self.MAX_RECON_EVENTS)
+        r.slow.add(now, rec.dst_ip, rec.dst_port, self.MAX_RECON_EVENTS)
 
     def _prune_recon(self, r: _SrcRecon, now: float) -> None:
-        limit = self.recon_window_seconds
-        while r.events and now - r.events[0][0] > limit:
-            self._drop_oldest(r)
+        r.fast.prune(now, self.recon_window_seconds)
+        r.slow.prune(now, max(self.slow_window_seconds, self.recon_window_seconds))
+
+    def recon_verdict(self, src_ip: str, dst_ip: str, now: Optional[float] = None
+                      ) -> Optional[Tuple[str, int, float]]:
+        """('portsweep'|'ipsweep', distinct count, window seconds) or None.
+
+        Two windows, as in production tools: a short one that catches fast scanners and a long one
+        (Zeek's default: 15 ports / 25 hosts in 5 minutes) that catches slow ones. Only FAILED
+        attempts count, and an address scan means many hosts on ONE port."""
+        r = self._recon.get(src_ip)
+        if r is None:
+            return None
+        if now is not None:
+            self._prune_recon(r, now)
+        for win, secs, port_thr, host_thr in (
+                (r.fast, self.recon_window_seconds, self.portsweep_port_threshold, self.ipsweep_host_threshold),
+                (r.slow, self.slow_window_seconds, self.slow_port_threshold, self.slow_host_threshold)):
+            ports = win.distinct_ports(dst_ip)
+            if ports >= port_thr:
+                return 'portsweep', ports, secs
+            hosts = win.max_hosts()
+            if hosts >= host_thr:
+                return 'ipsweep', hosts, secs
+        return None
 
     def check_portsweep(self, src_ip: str, dst_ip: str, now: Optional[float] = None) -> Tuple[bool, int]:
         r = self._recon.get(src_ip)
@@ -579,8 +636,8 @@ class HostConnectionTracker:
             return False, 0
         if now is not None:
             self._prune_recon(r, now)
-        distinct = len(r.ports.get(dst_ip, ()))
-        return distinct >= self.portsweep_port_threshold, distinct
+        fast, slow = r.fast.distinct_ports(dst_ip), r.slow.distinct_ports(dst_ip)
+        return (fast >= self.portsweep_port_threshold or slow >= self.slow_port_threshold), max(fast, slow)
 
     def check_ipsweep(self, src_ip: str, now: Optional[float] = None) -> Tuple[bool, int]:
         r = self._recon.get(src_ip)
@@ -588,8 +645,8 @@ class HostConnectionTracker:
             return False, 0
         if now is not None:
             self._prune_recon(r, now)
-        distinct = len(r.hosts)
-        return distinct >= self.ipsweep_host_threshold, distinct
+        fast, slow = r.fast.max_hosts(), r.slow.max_hosts()
+        return (fast >= self.ipsweep_host_threshold or slow >= self.slow_host_threshold), max(fast, slow)
 
     # -- garbage collection ----------------------------------------------
     def expire(self, now: float) -> None:
@@ -611,8 +668,8 @@ class HostConnectionTracker:
             r = self._recon[src]
             self._resolve_pending(r, now)
             self._prune_recon(r, now)
-            if not r.events and not r.pending and now - r.last_ts > self.recon_window_seconds:
-                del self._recon[src]
+            if not r.fast.events and not r.slow.events and not r.pending:
+                del self._recon[src]                 # nothing left to remember about this source
         if len(self._recon) > self.MAX_TRACKED_SOURCES:
             for src in sorted(self._recon, key=lambda k: self._recon[k].last_ts)[
                     :len(self._recon) - self.MAX_TRACKED_SOURCES]:
@@ -936,7 +993,8 @@ def compile_signatures(thresholds: Dict[str, Any]) -> List[_Signature]:
     cached = _SIG_CACHE.get(id(thresholds))
     if cached is not None and cached[0] is thresholds:
         return cached[1]
-    sigs = [_compile_signature(name, cfg) for name, cfg in thresholds.items() if isinstance(cfg, dict)]
+    sigs = [_compile_signature(name, cfg) for name, cfg in thresholds.items()
+            if isinstance(cfg, dict) and cfg.get('enabled', True)]
     if len(_SIG_CACHE) > 8:
         _SIG_CACHE.clear()
     _SIG_CACHE[id(thresholds)] = (thresholds, sigs)
@@ -1029,19 +1087,19 @@ DEFAULT_SEVERITY = {
     'warezclient': 'medium', 'satan': 'medium', 'portsweep': 'medium', 'ipsweep': 'medium',
     'mscan': 'medium',
 }
-DEFAULT_MITRE = {
-    'neptune': {'tactic': 'Impact', 'techniques': ['T1498', 'T1499']},
-    'portsweep': {'tactic': 'Discovery', 'techniques': ['T1046']},
-    'ipsweep': {'tactic': 'Discovery', 'techniques': ['T1046']},
-    'smurf': {'tactic': 'Impact', 'techniques': ['T1498', 'T1499']},
-    'satan': {'tactic': 'Reconnaissance', 'techniques': ['T1046', 'T1595']},
-    'back': {'tactic': 'Initial Access', 'techniques': ['T1046', 'T1190']},
-    'teardrop': {'tactic': 'Impact', 'techniques': ['T1498']},
-    'warezclient': {'tactic': 'Exfiltration', 'techniques': ['T1048']},
-    'guess_passwd': {'tactic': 'Credential Access', 'techniques': ['T1110']},
-    'mscan': {'tactic': 'Reconnaissance', 'techniques': ['T1046', 'T1595']},
-    'processtable': {'tactic': 'Impact', 'techniques': ['T1005']},
-    'pod': {'tactic': 'Impact', 'techniques': ['T1498']},
+DEFAULT_MITRE = {   # same shape as config.json threat_intel[...]['mitre']; verified against attack.mitre.org
+    'neptune': {'technique_id': 'T1499.001', 'technique_name': 'Endpoint Denial of Service: OS Exhaustion Flood', 'tactic': 'Impact'},
+    'smurf': {'technique_id': 'T1498.002', 'technique_name': 'Network Denial of Service: Reflection Amplification', 'tactic': 'Impact'},
+    'portsweep': {'technique_id': 'T1046', 'technique_name': 'Network Service Discovery', 'tactic': 'Discovery'},
+    'ipsweep': {'technique_id': 'T1018', 'technique_name': 'Remote System Discovery', 'tactic': 'Discovery'},
+    'satan': {'technique_id': 'T1595.002', 'technique_name': 'Active Scanning: Vulnerability Scanning', 'tactic': 'Reconnaissance'},
+    'mscan': {'technique_id': 'T1595.002', 'technique_name': 'Active Scanning: Vulnerability Scanning', 'tactic': 'Reconnaissance'},
+    'back': {'technique_id': 'T1499.003', 'technique_name': 'Endpoint Denial of Service: Application Exhaustion Flood', 'tactic': 'Impact'},
+    'teardrop': {'technique_id': 'T1499.004', 'technique_name': 'Endpoint Denial of Service: Application or System Exploitation', 'tactic': 'Impact'},
+    'pod': {'technique_id': 'T1499.004', 'technique_name': 'Endpoint Denial of Service: Application or System Exploitation', 'tactic': 'Impact'},
+    'warezclient': {'technique_id': 'T1048.003', 'technique_name': 'Exfiltration Over Alternative Protocol: Exfiltration Over Unencrypted Non-C2 Protocol', 'tactic': 'Exfiltration'},
+    'guess_passwd': {'technique_id': 'T1110.001', 'technique_name': 'Brute Force: Password Guessing', 'tactic': 'Credential Access'},
+    'processtable': {'technique_id': 'T1499.001', 'technique_name': 'Endpoint Denial of Service: OS Exhaustion Flood', 'tactic': 'Impact'},
 }
 # How events of one attack type are grouped into a single alert:
 # 'dst' = one alert per victim (DoS from many/spoofed sources),
@@ -1162,8 +1220,9 @@ class AlertAggregator:
             'reasons': [],
             'evidence': {},
         }
-        if intel.get('description'):
-            alert['description'] = intel['description']
+        for key in ('description', 'display_name', 'recommendation'):
+            if intel.get(key):
+                alert[key] = intel[key]
         if flow.names:
             alert['names'] = list(flow.names)
         return alert
@@ -1334,12 +1393,15 @@ class PacketAnalyzer:
         self.flow_emit_interval = _num(config, 'detection', 'flow_emit_interval_seconds', 0.5)
 
         scale = self.sampling_rate
-        port_thr = _num(config, 'detection', 'portsweep_port_threshold', 10, int)
-        host_thr = _num(config, 'detection', 'ipsweep_host_threshold', 10, int)
-        self.tracker.portsweep_port_threshold = max(2, math.ceil(port_thr / scale))
-        self.tracker.ipsweep_host_threshold = max(2, math.ceil(host_thr / scale))
-        self.tracker.recon_window_seconds = _num(config, 'detection', 'recon_window_seconds', 10.0)
-        self.tracker.probe_grace_seconds = self.half_open_grace_seconds
+        t = self.tracker
+        for attr, key, default in (('portsweep_port_threshold', 'portsweep_port_threshold', 20),
+                                   ('ipsweep_host_threshold', 'ipsweep_host_threshold', 20),
+                                   ('slow_port_threshold', 'slow_scan_port_threshold', 15),
+                                   ('slow_host_threshold', 'slow_scan_host_threshold', 25)):
+            setattr(t, attr, max(2, math.ceil(_num(config, 'detection', key, default, int) / scale)))
+        t.recon_window_seconds = _num(config, 'detection', 'recon_window_seconds', 10.0)
+        t.slow_window_seconds = _num(config, 'detection', 'slow_scan_window_seconds', 300.0)
+        t.probe_grace_seconds = self.half_open_grace_seconds
 
         agg = self.aggregator
         agg.cooldown = _num(config, 'detection', 'alert_cooldown_seconds', 30.0)
@@ -1478,14 +1540,13 @@ class PacketAnalyzer:
                                 now: Optional[float] = None) -> Optional[Tuple[str, str]]:
         """Deterministic cross-flow detectors for portsweep / ipsweep, driven
         by FAILED probes only. Returns (outcome, human readable reason)."""
-        window = self.tracker.recon_window_seconds
-        is_ps, ports = self.tracker.check_portsweep(src_ip, dst_ip, now)
-        if is_ps:
-            return 'portsweep', f"{ports} distinct ports probed on {dst_ip} in {window:g}s (failed/unanswered)"
-        is_ip, hosts = self.tracker.check_ipsweep(src_ip, now)
-        if is_ip:
-            return 'ipsweep', f"{hosts} distinct hosts probed by {src_ip} in {window:g}s (failed/unanswered)"
-        return None
+        v = self.tracker.recon_verdict(src_ip, dst_ip, now)
+        if v is None:
+            return None
+        outcome, n, secs = v
+        what = (f"distinct ports probed on {dst_ip}" if outcome == 'portsweep'
+                else f"distinct hosts probed on a single port by {src_ip}")
+        return outcome, f"{n} {what} in {secs:g}s (failed/unanswered attempts)"
 
     def _handle_new_probes(self, now: float, skip_flow_id: Optional[str] = None) -> None:
         """Raise sweep alerts for probes that matured since the last packet

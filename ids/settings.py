@@ -17,12 +17,18 @@ from typing import Any, Dict, List, Optional, Tuple
 REQUIRED_KEYS = ("interface", "thresholds")
 
 DETECTION_DEFAULTS: Dict[str, Any] = {
-    "match_threshold": 0.95,
+    # TCP half-open: RFC 6298 starts the retransmission timer at 1 s, so 2 s means "unanswered even after
+    # a retransmit", not "one lost SYN". Sources for every number: docs/TUNING.md.
     "half_open_grace_seconds": 2.0,
-    "half_open_min_count": 10,
-    "portsweep_port_threshold": 10,
-    "ipsweep_host_threshold": 10,
-    "recon_window_seconds": 10.0,
+    "half_open_min_count": 10,            # half-open connections to ONE port, dominating the last 2 s
+    "match_threshold": 0.95,
+    # failed-probe sweeps (only refused/unanswered attempts count)
+    "portsweep_port_threshold": 20,       # fast scanners: distinct ports on one host ...
+    "ipsweep_host_threshold": 20,         # ... or hosts on one port ...
+    "recon_window_seconds": 10.0,         # ... inside this window
+    "slow_scan_window_seconds": 300.0,    # slow scanners: Zeek's scan.zeek defaults
+    "slow_scan_port_threshold": 15,
+    "slow_scan_host_threshold": 25,
     "alert_cooldown_seconds": 30.0,
     "alert_max_per_second": 20,
     "flow_idle_timeout_seconds": 120.0,
@@ -34,14 +40,18 @@ TOP_LEVEL_SCHEMA = {
     "sampling_rate": (int, 1, 1000),
     "capture_packet_limit": (int, 1, 5000),
     "capture_timeout_seconds": (int, 1, 120),
-    "portsweep_port_threshold": (int, 2, 5000),
-    "ipsweep_host_threshold": (int, 2, 5000),
 }
 DETECTION_SCHEMA = {
     "match_threshold": (float, 0.5, 1.0),
     "half_open_grace_seconds": (float, 0.0, 60.0),
     "half_open_min_count": (int, 1, 100000),
     "alert_cooldown_seconds": (float, 0.0, 3600.0),
+    "portsweep_port_threshold": (int, 2, 5000),
+    "ipsweep_host_threshold": (int, 2, 5000),
+    "recon_window_seconds": (float, 1.0, 600.0),
+    "slow_scan_window_seconds": (float, 10.0, 3600.0),
+    "slow_scan_port_threshold": (int, 2, 5000),
+    "slow_scan_host_threshold": (int, 2, 5000),
 }
 REVERSE_DNS_MODES = ("off", "private", "all")
 
@@ -204,7 +214,7 @@ class Settings:
                 self.data.clear()
                 self.data.update(cfg)       # in place: existing references stay valid
         if ioc_text is not None:
-            path = self.resolve("ioc_list_path", "data/ioc.txt")
+            path = self.resolve("ioc_list_path") or (self.base_dir / "data" / "ioc.txt")   # null means "default"
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(ioc_text, encoding="utf-8")
             changed.append("ioc_list")
