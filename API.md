@@ -41,7 +41,7 @@ confidence 0–1, severity high|medium|low, message, timestamp (first seen), fir
 count (flagged packets), flows (distinct flows), sources (distinct source IPs),
 reasons [str]      human-readable "why" — show it in the inspector
 evidence {flag, service, count, srv_count, serror_rate, rerror_rate, dst_host_count, src_bytes, dst_bytes, duration, …}
-mitre {tactic, techniques[]}     description?   names [DNS/SNI/Host names seen]
+mitre {technique_id, technique_name, tactic}     description?   display_name?   recommendation? [str]   names [DNS/SNI/Host names seen]
 capture_source     "live:<iface>" | "replay:<file>"
 src_rdns, dst_rdns, src_geo?, dst_geo?, enrichment_summary?, ioc_matches [ "ip:…" | "cidr:…" | "domain:…" ]
 acknowledged, acknowledged_timestamp?, investigated?, investigator?, investigator_notes [{note,timestamp,false_positive,investigator}]
@@ -83,10 +83,11 @@ All NSL-KDD features (`duration, protocol_type, service, flag, src_bytes, dst_by
 "flows_db_path": "data/flows.db",    // completed-flow log; null to disable
 "alerts_retention_days": 30, "flows_max_rows": 500000,
 "replay_dir": "test_pcaps", "ioc_list_path": "data/ioc.txt",
-"recent_flows_limit": 1000, "alert_history_limit": 100,
+"recent_flows_limit": 1000, "alert_history_limit": 100,   // every detection default is explained in docs/TUNING.md
 "detection": {
   "match_threshold": 0.95, "half_open_grace_seconds": 2.0, "half_open_min_count": 10,
-  "portsweep_port_threshold": 10, "ipsweep_host_threshold": 10, "recon_window_seconds": 10,
+  "portsweep_port_threshold": 20, "ipsweep_host_threshold": 20, "recon_window_seconds": 10,
+  "slow_scan_window_seconds": 300, "slow_scan_port_threshold": 15, "slow_scan_host_threshold": 25,
   "alert_cooldown_seconds": 30, "alert_max_per_second": 20,
   "flow_idle_timeout_seconds": 120, "max_flows": 50000
 }
