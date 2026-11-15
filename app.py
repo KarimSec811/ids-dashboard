@@ -83,7 +83,8 @@ PORT = int(os.getenv("IDS_PORT", "5000"))
 API_TOKEN = os.getenv("IDS_API_TOKEN") or None
 
 REPLAY_DIR = settings.resolve("replay_dir", "test_pcaps")
-EXPORT_DIR = BASE_DIR / "data" / "pcaps"
+import tempfile
+EXPORT_DIR = Path(tempfile.gettempdir()) / "ids-pcaps"
 ALERT_HISTORY_LIMIT = int(settings.get("alert_history_limit", 100))
 RECENT_FLOWS_LIMIT = int(settings.get("recent_flows_limit", 1000))
 CHART_HISTORY_SECONDS = 60
