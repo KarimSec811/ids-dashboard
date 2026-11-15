@@ -2,11 +2,6 @@
 
 [![CI](https://github.com/KarimSec811/ids-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/KarimSec811/ids-dashboard/actions/workflows/ci.yml)
 [![Live demo](https://img.shields.io/badge/live%20demo-open-2563eb)](https://karimsec811.github.io/ids-dashboard/demo/)
-[![GitHub repo](https://img.shields.io/badge/GitHub-ids--dashboard-181717?logo=github&logoColor=white)](https://github.com/KarimSec811/ids-dashboard)
-[![Stars](https://img.shields.io/github/stars/KarimSec811/ids-dashboard?logo=github&label=stars)](https://github.com/KarimSec811/ids-dashboard/stargazers)
-[![Last commit](https://img.shields.io/github/last-commit/KarimSec811/ids-dashboard)](https://github.com/KarimSec811/ids-dashboard/commits/main)
-[![License](https://img.shields.io/github/license/KarimSec811/ids-dashboard)](https://github.com/KarimSec811/ids-dashboard/blob/main/LICENSE)
-[![Python](https://img.shields.io/badge/python-3.12-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 
 A network intrusion-detection sensor that tracks **TCP connection state** instead of judging packets one by one, so a SYN flood, a port scan and an IP sweep each raise **one explainable alert** with ATT&CK mapping, evidence and a downloadable PCAP. It comes with a live dashboard, replayable demo captures, and an honest list of what it misses.
 
@@ -18,11 +13,13 @@ A network intrusion-detection sensor that tracks **TCP connection state** instea
 
 | Alert | ATT&CK | How it is decided |
 |---|---|---|
-| `neptune` (SYN flood) | T1498 / T1499 | Many connections to one host that never completed the TCP handshake, *and* they dominate recent traffic to it (a busy server is not a flood) |
-| `portsweep` | T1046 | Distinct ports on one host probed with **failed** attempts (refused, reset, or unanswered after a grace period) |
-| `ipsweep` | T1046 | Distinct hosts probed by one source with failed attempts |
+| `neptune` (SYN flood) | T1499.001 | Many connections to one host that never completed the TCP handshake, hitting **one port**, *and* dominating recent traffic to it (a busy server is not a flood; a scan of open ports is not a flood) |
+| `portsweep` | T1046 | 20 distinct ports on one host with **failed** attempts (refused, reset, or unanswered after 2 s) within 10 s, or 15 within 5 minutes (the slow tier, Zeek's default) |
+| `ipsweep` | T1018 | 20 distinct hosts on **one port** with failed attempts within 10 s, or 25 within 5 minutes |
+| `smurf` | T1498.002 | Echo-reply amplification: many ICMP replies of the amplified size, not one large ping |
+| `guess_passwd` | T1110.001 | At least 3 server-confirmed failed logins on one connection of a cleartext login service (FTP, Telnet, POP3...). One mistyped password is not an alert |
 
-A set of NSL-KDD-style signatures (`smurf`, `teardrop`, `guess_passwd`, ...) is also available through `config.json`. It is kept for compatibility and experimentation; it is not what the sensor's accuracy rests on.
+The other NSL-KDD rules (`satan`, `back`, `pod`, `teardrop`, ...) are kept in `config.json` **disabled**, each with the measured reason: on held-out data they cannot tell an attack from normal traffic using one connection's features. See [docs/TUNING.md](docs/TUNING.md).
 
 Every alert carries `reasons` (why it fired), `evidence` (the feature values), and the number of events, flows and sources it aggregates.
 
@@ -49,15 +46,24 @@ flowchart LR
 
 | Scenario | Result |
 |---|---|
-| nmap SYN / connect / FIN / XMAS scans, masscan (1,000 ports) | detected, **1 alert each**, within 0.1-0.2 s |
-| nmap `-T2` polite scan | detected, 1 alert, 2.5 s |
-| nmap ping sweep, fping sweep (routed hosts) | detected, 1 alert, 2.0-2.6 s |
-| hping3 SYN flood, from a real host and with spoofed sources | detected, 1 alert each |
+| nmap SYN / connect / FIN / XMAS scans, masscan (1,000 ports) | detected, **1 alert each**, within 0.3 s |
+| nmap `-T2` polite scan (one probe per 0.4 s) | detected, 1 alert, 6.5 s |
+| nmap `--scan-delay 5s` slow scan | detected by the slow tier, 1 alert, 85 s |
+| nmap ping sweep, fping sweep (routed hosts) | detected, 1 alert, 2.6-4.0 s |
+| hping3 SYN flood, from a real host and with spoofed sources | detected, 1 alert each, immediately |
 | FTP password guessing | detected (`guess_passwd`), 1 alert |
-| 300 parallel HTTP requests, a service tour of 7 ports, a small admin scan, ping | **0 alerts** |
-| nmap `-T1` (one probe every 15 s), UDP scan, SYN flood to a closed port | missed, by design (see Limitations) |
+| 300 parallel HTTP requests, a 7-port service tour, a small admin scan, one mistyped FTP password, a 600-byte ping, ping | **0 alerts** (6 of 6 clean) |
+| `nmap -T1` (8 ports, 15 s apart), UDP scan, SYN flood to a closed port | missed, by design (see Limitations) |
 
-> **Development set, not a final test.** The first run with real tools missed a single-host `hping3` flood: the attacker's own kernel resets every SYN-ACK, so connections never looked half-open. That is fixed (with two regression tests) and recorded in the report's findings log. Because the engine was corrected while building this evaluation, these numbers are optimistic. The unbiased test is the same scripts run once in a VM lab (Kali against Metasploitable), with Zeek and Suricata as baselines: the harness is ready, see [eval/README.md](eval/README.md).
+**What the configuration audit was worth.** Same engine, same captures, only `config.json` changed ([report](docs/EVALUATION-original-config.md)):
+
+| | original `config.json` | audited `config.json` |
+|---|---|---|
+| benign scenarios with no alert | **0 / 6** (a `pod` alert on every ping) | **6 / 6** |
+| attacks detected | 8 / 9 | 12 / 12 |
+| alerts per attack | 5.9 | 1.0 |
+
+> **Development set, not a final test.** The configuration was audited against the NSL-KDD data and this lab, and the first run with real tools exposed a real bug (a single-host `hping3` flood, fixed with regression tests). So these numbers are optimistic. The unbiased test is the same scripts run once in a VM lab (Kali against Metasploitable), with Zeek and Suricata as baselines: see [eval/README.md](eval/README.md).
 
 ## Results on synthetic PCAPs
 
@@ -107,7 +113,7 @@ profiles (sensitive / balanced / conservative) and how to tune on your own traff
 
 - **Validated against real attack tools in a virtual lab (a development set), not yet on a held-out lab or production traffic.** Nothing here has seen a real network's background noise beyond the short benign scenarios.
 - **Throughput is a few hundred to ~1,500 packets/s**, limited by pyshark/tshark parsing. The detection engine itself takes ~0.5 ms per packet. This is a learning-grade sensor, not a line-rate one.
-- **Evasions that work today:** slow scans below the probe window, scans distributed across many sources, and anything encrypted (payload heuristics only run on cleartext protocols).
+- **Evasions that work today:** scans slower than the 5-minute window's 15 ports / 25 hosts (Zeek's default would miss them too), scans distributed across many sources, and anything encrypted (payload heuristics only run on cleartext protocols).
 - **Sweeps of dead hosts on a flat Ethernet segment are invisible**: the probes stop at ARP and never become IP packets (Zeek's scan detection has the same blind spot). Only routed or IP-level sweeps are seen.
 - **The sensor's clock follows packets.** An unanswered probe is declared failed when a later packet arrives, so a completely silent link delays that alert.
 - **A flood of SYNs to a closed port** (answered with RST) is not reported as a SYN flood.
@@ -131,7 +137,9 @@ ids/store.py            SQLite persistence (alerts, flow log)
 ids/settings.py         validated config.json updates
 templates/, static/     dashboard (plain HTML/CSS/JS, no build step)
 tests/                  engine, golden-PCAP and web-layer tests
-eval/                   evaluation harness: scenarios, lab runner, scoring, results/ (PCAPs + ground truth)
+eval/                   evaluation harness: scenarios, lab runner, scoring, results/ (PCAPs + ground truth);
+                        kdd_fit.py (re-derive signatures from NSL-KDD), kdd_check.py, lint_config.py
+docs/TUNING.md          where every number in config.json comes from, and how to tune it
 tools/build_demo.py     builds the static live demo into docs/demo/
 API.md                  Socket.IO events, HTTP routes, alert/flow schemas
 ```
@@ -139,7 +147,7 @@ API.md                  Socket.IO events, HTTP routes, alert/flow schemas
 ## Tests
 
 ```bash
-python tests/make_pcaps.py && python -m pytest tests -q      # 56 tests, ~40 s, needs tshark
+python tests/make_pcaps.py && python -m pytest tests -q      # 57 tests, ~40 s, needs tshark
 sudo eval/run_netns_lab.sh                                   # real attack tools in a virtual lab, ~10 min (Linux)
 ```
 
