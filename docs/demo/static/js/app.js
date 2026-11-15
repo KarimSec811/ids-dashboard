@@ -143,14 +143,16 @@ class App {
         $('inspectorTitle').textContent = item.id ? `Alert: ${item.outcome}` : 'Flow';
         const why = item.reasons && item.reasons.length
             ? `<h4>Why it was flagged</h4><ul>${item.reasons.map(r => `<li>${E(r)}</li>`).join('')}</ul>` : '';
+        const rec = item.recommendation && item.recommendation.length
+            ? `<h4>What to do</h4><ul>${[].concat(item.recommendation).map(r => `<li>${E(r)}</li>`).join('')}</ul>` : '';
         const pcap = item.id
             ? `<p><a class="btn btn-sm btn-secondary" href="${E(Utils.withToken('/export/alert_pcap?id=' + encodeURIComponent(item.id)))}">Download evidence PCAP</a></p>` : '';
-        const rows = Object.entries(item).filter(([k]) => k !== 'reasons').map(([k, v]) => {
+        const rows = Object.entries(item).filter(([k]) => k !== 'reasons' && k !== 'recommendation').map(([k, v]) => {
             const shown = /timestamp|first_seen|last_seen/.test(k) ? Utils.formatTime(v)
                 : (v !== null && typeof v === 'object') ? JSON.stringify(v) : v;
             return `<dt>${E(k)}</dt><dd>${E(shown)}</dd>`;
         }).join('');
-        body.innerHTML = `${why}${pcap}<dl>${rows}</dl>`;
+        body.innerHTML = `${why}${rec}${pcap}<dl>${rows}</dl>`;
         $('exportJsonBtn').onclick = () => this.downloadJson(item);
         panel.classList.add('open');
         panel.setAttribute('aria-hidden', 'false');
