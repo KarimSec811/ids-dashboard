@@ -18,6 +18,13 @@ export class SocketManager {
             s.emit('request_initial_data', { page: document.body.dataset.page || 'dashboard' });
         });
         s.on('disconnect', () => this.setStatus('Disconnected', 'error'));
+        s.on('connect_error', err => {
+            this.setStatus('Connection rejected or unavailable', 'error');
+            // Token-authenticated servers reject clients during the handshake;
+            // rejected clients cannot receive the server's auth_error event.
+            // Prompt only for an explicit rejection, not transient network errors.
+            if (!this._asked && /rejected/i.test(err?.message || '')) this._promptForToken();
+        });
 
         s.on('flow_update', d => Dashboard.addFlows(d.flows));   // full list (flows page, on load)
         s.on('flow_batch', d => Dashboard.addFlows(d.flows));    // live changes
@@ -37,12 +44,14 @@ export class SocketManager {
         });
         s.on('auth_error', () => {
             this.setStatus('Access token required', 'error');
-            if (!this._asked) {
-                this._asked = true;
-                const t = prompt('This server needs an access token (IDS_API_TOKEN):');
-                if (t) { localStorage.setItem('ids_token', t); location.reload(); }
-            }
+            if (!this._asked) this._promptForToken();
         });
+    }
+
+    _promptForToken() {
+        this._asked = true;
+        const t = prompt('This server needs an access token (IDS_API_TOKEN):');
+        if (t) { localStorage.setItem('ids_token', t); location.reload(); }
     }
 
     startIDS(pcap) { this.socket.emit('start_ids', pcap ? { pcap, speed: 10 } : {}); }
