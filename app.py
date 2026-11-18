@@ -551,9 +551,14 @@ def health():
 
 @socketio.on("connect")
 def on_connect(auth=None):
-    logger.info("Client connected")
-    if isinstance(auth, dict) and _token_ok(auth.get("token")) and API_TOKEN:
+    # When a token is configured, reject unauthenticated clients at the
+    # connection boundary so they cannot receive global Socket.IO broadcasts.
+    if API_TOKEN:
+        if not isinstance(auth, dict) or not _token_ok(auth.get("token")):
+            logger.warning("Rejected unauthenticated Socket.IO connection")
+            return False
         _authed_sids.add(request.sid)
+    logger.info("Client connected")
     start_background_services()
     emit("status_update", _status_payload("IDS Started" if rt.running else "IDS Stopped",
                                           "success" if rt.running else "info"))
@@ -673,6 +678,8 @@ def on_investigate_alert(data=None):
 
 @socketio.on("request_initial_data")
 def on_request_initial_data(data=None):
+    if not _socket_authorized(data):
+        return _deny_socket()
     page = data.get("page") if isinstance(data, dict) else None
     if page == "flows":
         emit("flow_update", {"flows": flow_book.recent(500)})
@@ -682,7 +689,9 @@ def on_request_initial_data(data=None):
 
 
 @socketio.on("request_health")
-def on_request_health():
+def on_request_health(data=None):
+    if not _socket_authorized(data):
+        return _deny_socket()
     emit("system_health", get_system_health())
 
 
@@ -850,6 +859,7 @@ def _tshark_interfaces() -> List[str]:
 
 
 @app.route("/api/interfaces")
+@require_token
 def api_interfaces():
     out: List[str] = []
     try:
@@ -862,6 +872,7 @@ def api_interfaces():
 
 
 @app.route("/api/pcaps")
+@require_token
 def api_pcaps():
     files = []
     if REPLAY_DIR and REPLAY_DIR.is_dir():
@@ -872,11 +883,13 @@ def api_pcaps():
 
 
 @app.route("/api/status")
+@require_token
 def api_status():
     return jsonify(get_system_health())
 
 
 @app.route("/api/flows")
+@require_token
 def api_flows():
     limit = _int_arg("limit", 500, 1, 20000)
     outcome = request.args.get("outcome")
@@ -891,11 +904,13 @@ def api_flows():
 
 
 @app.route("/api/alerts")
+@require_token
 def api_alerts():
     return _alerts_history_response()
 
 
 @app.route("/alerts/history")
+@require_token
 def alerts_history():
     return _alerts_history_response()
 
@@ -974,6 +989,7 @@ def _flat(value: Any) -> Any:
 
 
 @app.route("/export/flows.csv")
+@require_token
 def export_flows_csv():
     try:
         limit = _int_arg("limit", 500, 1, 20000)
@@ -991,6 +1007,7 @@ def export_flows_csv():
 
 
 @app.route("/export/alerts.csv")
+@require_token
 def export_alerts_csv():
     if alert_store is None:
         return jsonify({"error": "alerts DB not configured"}), 404
@@ -1097,9 +1114,16 @@ def _export_from_replay(name: str, display_filter: str, out_path: Path):
     src = _resolve_replay(name)
     tool = shutil.which("tshark")
     if src is None or tool is None:
+        logger.warning("export: src=%r tool=%r", src, tool)
         return jsonify({"error": "source capture or tshark not available"}), 500
-    subprocess.run([tool, "-r", str(src), "-Y", display_filter, "-F", "pcap", "-w", str(out_path)],
-                   check=False, timeout=60, capture_output=True)
+    proc = subprocess.run(
+        [tool, "-r", str(src), "-Y", display_filter, "-F", "pcap", "-w", str(out_path)],
+        check=False, timeout=60, capture_output=True, text=True)
+    logger.warning(
+        "export: rc=%s out=%s exists=%s size=%s filter=%r stderr=%r",
+        proc.returncode, out_path, out_path.exists(),
+        out_path.stat().st_size if out_path.exists() else -1,
+        display_filter, (proc.stderr or "")[:600])
     return _send_pcap(out_path, "replay-filter")
 
 
