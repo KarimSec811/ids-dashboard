@@ -105,19 +105,32 @@ def test_pcaps_listing_and_interfaces(http):
 # auth
 # --------------------------------------------------------------------------
 
-def test_token_protects_control_and_mutation(ids, http, monkeypatch):
+def test_token_protects_telemetry_control_and_mutation(ids, http, monkeypatch):
     monkeypatch.setattr(ids, "API_TOKEN", "s3cret")
+    protected_gets = (
+        "/api/interfaces", "/api/pcaps", "/api/status", "/api/flows",
+        "/api/alerts", "/alerts/history", "/export/flows.csv", "/export/alerts.csv",
+        "/export/alert_pcap?flow_id=x",
+    )
+    for path in protected_gets:
+        assert http.get(path).status_code == 401, path
+        assert http.get(path, headers={"X-IDS-Token": "wrong"}).status_code == 401, path
+        assert http.get(path, headers={"X-IDS-Token": "s3cret"}).status_code != 401, path
+
     assert http.post("/settings/update", json={"sampling_rate": 2}).status_code == 401
     ok = http.post("/settings/update", json={"sampling_rate": 2}, headers={"X-IDS-Token": "s3cret"})
     assert ok.status_code == 200
-    assert http.get("/export/alert_pcap?flow_id=x").status_code == 401
-    client = sio(ids, http)
-    client.get_received()
+
+    # A configured token is enforced during the Socket.IO handshake, before
+    # the client can receive global broadcasts.
+    unauth = ids.socketio.test_client(ids.app, flask_test_client=http)
+    assert not unauth.is_connected()
+    bad = ids.socketio.test_client(ids.app, flask_test_client=http, auth={"token": "wrong"})
+    assert not bad.is_connected()
+    client = ids.socketio.test_client(ids.app, flask_test_client=http, auth={"token": "s3cret"})
+    assert client.is_connected()
     client.emit("start_ids", {})
-    events = {e["name"] for e in client.get_received()}
-    assert "auth_error" in events and not ids.rt.running
-    client.emit("start_ids", {"token": "wrong"})
-    assert "auth_error" in {e["name"] for e in client.get_received()}
+    assert not ids.rt.running
     client.disconnect()
     http.post("/settings/update", json={"sampling_rate": 1}, headers={"X-IDS-Token": "s3cret"})
 
