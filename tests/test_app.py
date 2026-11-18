@@ -129,8 +129,13 @@ def test_token_protects_telemetry_control_and_mutation(ids, http, monkeypatch):
     assert not bad.is_connected()
     client = ids.socketio.test_client(ids.app, flask_test_client=http, auth={"token": "s3cret"})
     assert client.is_connected()
-    client.emit("start_ids", {})
-    assert not ids.rt.running
+    # An empty start_ids payload means "start live capture" in this app.
+    # Use an invalid replay name to exercise the authenticated control event
+    # without accidentally starting a real capture in the test environment.
+    client.emit("start_ids", {"pcap": "../../etc/passwd", "speed": 0})
+    events = client.get_received()
+    status = [e for e in events if e["name"] == "status_update"][-1]["args"][0]
+    assert status["color"] == "danger" and not ids.rt.running
     client.disconnect()
     http.post("/settings/update", json={"sampling_rate": 1}, headers={"X-IDS-Token": "s3cret"})
 
