@@ -40,6 +40,14 @@ flowchart LR
 - **Scoring ignores conditions that cannot fail.** Counters are lower-bounded only, so a bigger flood never scores as a smaller one.
 - **One alert per attack, not per packet.** Alerts are grouped per attacker/victim pair (or per victim for floods) inside a cooldown window.
 
+## How it Looks like
+
+
+<img width="1440" height="900" alt="a-dashboard" src="https://github.com/user-attachments/assets/be991016-d025-4afe-ae65-ef78097be6c9" />
+
+<img width="1440" height="900" alt="02-alerts" src="https://github.com/user-attachments/assets/9784b952-6bf4-4567-ba2b-7fdf33a1e40f" />
+
+
 ## Results with real attack tools
 
 `eval/run_netns_lab.sh` builds a virtual lab (a Metasploitable-style victim with 17 services), attacks it with **real nmap, masscan, hping3 and fping**, replays each capture through the sensor and scores it against ground truth. Full table: [docs/EVALUATION.md](docs/EVALUATION.md).
