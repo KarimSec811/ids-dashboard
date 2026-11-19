@@ -88,6 +88,10 @@ class CaptureSession:
                         break
                     if self.speed > 0:
                         prev_ts = self._pace(packet, prev_ts)
+                        # _pace() uses the stop event as an interruptible wait.
+                        # Do not process the packet if shutdown interrupted replay.
+                        if self._stop.is_set():
+                            break
                     self.analyzer.process_packet(packet)
                     self.packets += 1
                     if self.on_packet is not None and self.packets % 200 == 0:
@@ -105,7 +109,12 @@ class CaptureSession:
         except Exception:
             return prev_ts
         if prev_ts is not None and ts > prev_ts:
-            self._stop.wait(min((ts - prev_ts) / self.speed, 0.25))
+            # Event.wait() is interruptible, so there is no need to cap the
+            # delay. Capping it changes the PCAP's timing whenever an
+            # inter-packet gap exceeds 250 ms (and can invalidate time-based
+            # detection tests). The run loop checks the stop event immediately
+            # after this wait and will not process a packet after shutdown.
+            self._stop.wait((ts - prev_ts) / self.speed)
         return ts
 
     def _translate(self, exc: Exception) -> Exception:
