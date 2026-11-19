@@ -11,7 +11,7 @@ import sys
 import time
 from pathlib import Path
 
-import pytest
+import pytest  # type: ignore[reportMissingImports]
 from jinja2 import DictLoader
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -107,38 +107,39 @@ def test_pcaps_listing_and_interfaces(http):
 
 def test_token_protects_telemetry_control_and_mutation(ids, http, monkeypatch):
     monkeypatch.setattr(ids, "API_TOKEN", "s3cret")
-    protected_gets = (
-        "/api/interfaces", "/api/pcaps", "/api/status", "/api/flows",
-        "/api/alerts", "/alerts/history", "/export/flows.csv", "/export/alerts.csv",
-        "/export/alert_pcap?flow_id=x",
-    )
-    for path in protected_gets:
-        assert http.get(path).status_code == 401, path
-        assert http.get(path, headers={"X-IDS-Token": "wrong"}).status_code == 401, path
-        assert http.get(path, headers={"X-IDS-Token": "s3cret"}).status_code != 401, path
+    client = None
+    try:
+        protected_gets = (
+            "/api/interfaces", "/api/pcaps", "/api/status", "/api/flows",
+            "/api/alerts", "/alerts/history", "/export/flows.csv", "/export/alerts.csv",
+            "/export/alert_pcap?flow_id=x",
+        )
+        for path in protected_gets:
+            assert http.get(path).status_code == 401
+        assert http.post("/settings/update", json={"sampling_rate": 2}).status_code == 401
+        ok = http.post("/settings/update", json={"sampling_rate": 2},
+                       headers={"X-IDS-Token": "s3cret"})
+        assert ok.status_code == 200
 
-    assert http.post("/settings/update", json={"sampling_rate": 2}).status_code == 401
-    ok = http.post("/settings/update", json={"sampling_rate": 2}, headers={"X-IDS-Token": "s3cret"})
-    assert ok.status_code == 200
+        unauth = ids.socketio.test_client(ids.app, flask_test_client=http)
+        assert not unauth.is_connected()
+        bad = ids.socketio.test_client(ids.app, flask_test_client=http, auth={"token": "wrong"})
+        assert not bad.is_connected()
+        client = ids.socketio.test_client(ids.app, flask_test_client=http, auth={"token": "s3cret"})
+        assert client.is_connected()
 
-    # A configured token is enforced during the Socket.IO handshake, before
-    # the client can receive global broadcasts.
-    unauth = ids.socketio.test_client(ids.app, flask_test_client=http)
-    assert not unauth.is_connected()
-    bad = ids.socketio.test_client(ids.app, flask_test_client=http, auth={"token": "wrong"})
-    assert not bad.is_connected()
-    client = ids.socketio.test_client(ids.app, flask_test_client=http, auth={"token": "s3cret"})
-    assert client.is_connected()
-    # An empty start_ids payload means "start live capture" in this app.
-    # Use an invalid replay name to test authenticated control without
-    # starting a real capture.
-    client.emit("start_ids", {"pcap": "../../etc/passwd", "speed": 0})
-    events = client.get_received()
-    status = [e for e in events if e["name"] == "status_update"][-1]["args"][0]
-    assert status["color"] == "danger" and not ids.rt.running
-    client.disconnect()
-    client.disconnect()
-    http.post("/settings/update", json={"sampling_rate": 1}, headers={"X-IDS-Token": "s3cret"})
+        client.emit("start_ids", {"pcap": "../../etc/passwd", "speed": 0})
+        events = client.get_received()
+        status = [e for e in events if e["name"] == "status_update"][-1]["args"][0]
+        assert status["color"] == "danger" and not ids.rt.running
+    finally:
+        # ALWAYS restore, even if an assertion above fails
+        http.post("/settings/update", json={"sampling_rate": 1},
+                  headers={"X-IDS-Token": "s3cret"})
+        if client is not None and client.is_connected():
+            client.disconnect()
+
+        http.post("/settings/update", json={"sampling_rate": 1}, headers={"X-IDS-Token": "s3cret"})
 
 
 def test_replay_names_cannot_escape_the_replay_directory(ids, http):
