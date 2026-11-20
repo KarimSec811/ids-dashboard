@@ -1,41 +1,18 @@
 {% extends 'base.html' %}
+{% block title %}Flows · IDS Console{% endblock %}
 {% block content %}
-    <header class="topbar">
-        <div class="topbar-left">
+    <header class="page-head">
+        <div>
             <h1>Flows</h1>
-            <p>Inspect recent connections and captured traffic metadata.</p>
+            <p>Connections as the sensor tracks them, newest first. Originator is always the side that sent the SYN.</p>
         </div>
     </header>
-
+    <div class="toolbar"><button id="flaggedOnly" class="chip" aria-pressed="false">Flagged only <b id="flaggedCount">0</b></button><span class="sub" id="flowTotal"></span></div>
     <section class="card">
-        <div class="card-header">
-            <div>
-                <h2>Captured Flows</h2>
-                <p>This view will show session-level data and flow summaries.</p>
-            </div>
-        </div>
-        <div class="table-wrapper">
-            <table id="flowListTable">
-                <thead>
-                    <tr>
-                        <th>Flow ID</th>
-                        <th>Source</th>
-                        <th>Destination</th>
-                        <th>Protocol</th>
-                        <th>Result</th>
-                        <th>Confidence</th>
-                    </tr>
-                </thead>
-                <tbody id="flowListBody">
-                    <tr>
-                        <td colspan="6">
-                            <div class="empty-state">
-                                <h3>Flow history is empty</h3>
-                                <p>Start capture and return after some traffic has been processed.</p>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Last seen</th><th>Source</th><th>Destination</th><th>Proto</th><th>Service</th><th>State</th><th>Result</th><th class="num">Bytes</th></tr></thead>
+                <tbody id="flowListBody"></tbody>
             </table>
         </div>
     </section>

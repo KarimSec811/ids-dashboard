@@ -1,90 +1,47 @@
 {% extends 'base.html' %}
+{% block title %}Dashboard · IDS Console{% endblock %}
 {% block content %}
-    <header class="topbar">
-        <div class="topbar-left">
-            <h1>Network IDS Dashboard</h1>
-            <p>Real-time capture and intrusion detection.</p>
+    <header class="page-head">
+        <div>
+            <h1>Live traffic</h1>
+            <p>What the sensor sees and flags, second by second.</p>
         </div>
-        <div class="top-actions">
-            <select id="replaySelect" aria-label="Sample capture to replay"><option value="">Sample capture...</option></select>
-            <button id="replayBtn" class="btn btn-secondary">Replay</button>
-            <button id="startBtn" class="btn btn-success">Start IDS</button>
-            <button id="stopBtn" class="btn btn-danger" disabled>Stop IDS</button>
+        <div class="actions">
+            <select id="replaySelect" aria-label="Sample capture to replay"><option value="">Sample capture…</option></select>
+            <button id="replayBtn" class="btn">Replay</button>
+            <button id="startBtn" class="btn btn-primary">Start capture</button>
+            <button id="stopBtn" class="btn btn-danger" disabled>Stop</button>
         </div>
     </header>
 
-    <section class="system-banner">
-        <div>
-            <h3>Capture Status</h3>
-            <span id="captureStatus">STOPPED</span>
+    <section class="card trace" aria-label="Live traffic">
+        <div class="trace-head">
+            <div class="trace-stats">
+                <div class="stat signal"><b id="packetRateLarge">0</b><span>packets / s</span></div>
+                <div class="stat alarm"><b id="attacksRateLarge">0</b><span>flagged / s</span></div>
+                <div class="stat"><b id="totalPackets">0</b><span>packets analysed</span></div>
+                <div class="stat"><b id="attackPackets">0</b><span>alerts raised</span></div>
+            </div>
+            <div class="legend"><span><i style="background:var(--signal)"></i>Traffic</span><span><i style="background:var(--alarm)"></i>Flagged as attack</span><span>last 60 s</span></div>
         </div>
-        <div>
-            <h3>Total Packets</h3>
-            <span id="totalPackets">0</span>
-        </div>
-        <div>
-            <h3>Detected Attacks</h3>
-            <span id="attackPackets">0</span>
-        </div>
-        <div>
-            <h3>Packet Rate</h3>
-            <span id="packetRate">0 pkt/s</span>
-        </div>
+        <div class="chart-wrap"><canvas id="trafficChart" aria-label="Packets per second over the last 60 seconds"></canvas><div id="chartTip" class="chart-tip" hidden></div></div>
     </section>
 
-    <section class="card health-card">
-        <div class="card-header">
-            <h2>System Health</h2>
-        </div>
-        <div class="health-list">
-            <div class="health-row">
-                <span>CPU Usage</span>
-                <span id="cpuUsage">0%</span>
+    <div class="split">
+        <section class="card" aria-label="Recent alerts">
+            <div class="card-head"><h2>Recent alerts</h2><span><span id="alertCountLarge" class="count zero">0</span> <span class="sub">unacknowledged</span></span></div>
+            <ol id="recentAlerts" class="feed-list"></ol>
+            <div class="feed-foot"><a href="{{ url_for('alerts') }}">All alerts &rarr;</a></div>
+        </section>
+        <section class="card" aria-label="Sensor health">
+            <div class="card-head"><h2>Sensor health</h2><span id="captureStatus" class="tag">STOPPED</span></div>
+            <div class="rows">
+                <div class="row"><span>CPU</span><span class="meter"><i id="cpuBar" style="width:0%"></i></span><b id="cpuUsage">0%</b></div>
+                <div class="row"><span>Memory</span><span class="meter"><i id="memoryBar" style="width:0%"></i></span><b id="memoryUsage">0 MB</b></div>
+                <div class="row"><span>Queue</span><span class="meter"><i id="queueBar" style="width:0%"></i></span><b id="queueValue">0</b></div>
+                <div class="row"><span>Active flows</span><span></span><b id="activeFlows">0</b></div>
+                <div class="row"><span>Uptime</span><span></span><b id="uptime">00:00:00</b></div>
             </div>
-            <div class="progress"><div id="cpuBar" style="width: 0%"></div></div>
-            <div class="health-row">
-                <span>Memory</span>
-                <span id="memoryUsage">0 MB</span>
-            </div>
-            <div class="progress"><div id="memoryBar" style="width: 0%"></div></div>
-            <div class="health-row">
-                <span>Queue</span>
-                <span id="queueValue">0</span>
-            </div>
-            <div class="progress"><div id="queueBar" style="width: 0%"></div></div>
-            <div class="health-row">
-                <span>Uptime</span>
-                <span id="uptime">00:00:00</span>
-            </div>
-        </div>
-    </section>
-
-    <section class="flows-section">
-        <div class="card">
-            <div class="card-header">
-                <div>
-                    <h2>Traffic Overview</h2>
-                    <p>The last 60 seconds. Use the Flows page or Export for details.</p>
-                </div>
-            </div>
-            <div class="card-body" style="padding:16px;">
-                <div class="chart-wrap"><canvas id="trafficChart"></canvas></div>
-                <div class="chart-legend"><span class="blue">Packets/sec</span><span class="red">Attacks/sec</span></div>
-                <div id="chartSummary" style="min-height:180px; display:flex; gap:12px; align-items:center; justify-content:center; color:var(--text-secondary);">
-                    <div>
-                        <h3>Packets/sec</h3>
-                        <div id="packetRateLarge" style="font-size:28px; font-weight:700;">0</div>
-                    </div>
-                    <div>
-                        <h3>Attacks/sec</h3>
-                        <div id="attacksRateLarge" style="font-size:28px; font-weight:700; color:var(--danger);">0</div>
-                    </div>
-                    <div>
-                        <h3>Active Alerts</h3>
-                        <div id="alertCountLarge" style="font-size:28px; font-weight:700; color:var(--warning);">0</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+        </section>
+    </div>
 {% endblock %}

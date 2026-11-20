@@ -1,14 +1,12 @@
 {% extends 'base.html' %}
+{% block title %}Settings · IDS Console{% endblock %}
 {% block content %}
-    <header class="topbar">
-        <div class="topbar-left">
-            <h1>Settings</h1>
-            <p>Capture and detection behavior. Changes are saved to config.json.</p>
-        </div>
+    <header class="page-head">
+        <div><h1>Settings</h1><p>Capture and detection behaviour. Changes are saved to config.json; every default is explained in docs/TUNING.md.</p></div>
     </header>
 
     <section class="card">
-        <div class="card-body" style="padding: 24px;">
+        <div class="card-body">
             <form id="settingsForm" class="form-grid">
                 <label>Capture interface
                     <input name="interface" list="ifaceList" value="{{ config.interface }}" required>
@@ -37,7 +35,7 @@
                     </select>
                 </label>
                 <div>
-                    <button class="btn btn-success" type="submit">Save settings</button>
+                    <button class="btn btn-primary" type="submit">Save settings</button>
                     <p id="settingsMsg" role="status"></p>
                 </div>
             </form>

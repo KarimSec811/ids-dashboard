@@ -3,117 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IDS Dashboard</title>
+    <title>Alerts · IDS Console</title>
+    <link rel="preload" href="static/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="static/css/style.css">
-    <link rel="stylesheet" href="static/css/extra.css">
 </head>
-<body data-page="alerts">
+<body data-page="alerts" data-running="false">
+    <a href="#main" class="skip-link">Skip to content</a>
     <div class="app">
         <aside class="sidebar">
-            <div>
-                <div class="logo">
-                    <div class="logo-icon">IDS</div>
-                    <div>
-                        <h2>IDS Console</h2>
-                        <span>Security monitoring</span>
-                    </div>
-                </div>
-                <nav>
-                    <a class="nav-btn " href="index.html">Dashboard</a>
-                    <a class="nav-btn active" href="alerts.html">Alerts</a>
-                    <a class="nav-btn " href="flows.html">Flows</a>
-                    <a class="nav-btn " href="export.html">Export</a>
-                    <a class="nav-btn " href="settings.html">Settings</a>
-                </nav>
+            <div class="brand">
+                <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0b8a8c"/><path d="M5 18h5l3-8 5 14 3-9 2 3h4" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <div><b>IDS Console</b><span>Network sensor</span></div>
             </div>
-
-            <div class="sidebar-bottom">
-                <div class="system-status">
-                    <span class="status-dot"></span>
-                    <div>
-                        <strong>Realtime capture</strong>
-                        <div class="status-summary">Connected to capture engine</div>
-                    </div>
-                </div>
+            <nav class="nav" aria-label="Main">
+                <a class="nav-link " href="index.html"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</a>
+                <a class="nav-link active" href="alerts.html"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/></svg>Alerts</a>
+                <a class="nav-link " href="flows.html"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Flows</a>
+                <a class="nav-link " href="export.html"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 20h16"/></svg>Export</a>
+                <a class="nav-link " href="settings.html"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Settings</a>
+            </nav>
+            <div class="sensor" aria-live="polite">
+                <span class="dot"></span>
+                <div><b id="sensorState">Stopped</b><span id="sensorDetail">No capture running</span></div>
             </div>
         </aside>
 
-        <main id="main" class="main-content">
-                <a href="#main" class="skip-link">Skip to content</a>
-                
-    <header class="topbar">
-        <div class="topbar-left">
+        <main id="main" class="main">
+            
+    <header class="page-head">
+        <div>
             <h1>Alerts</h1>
-            <p>Detected attacks. Repeated detections of the same attack are grouped into one alert.</p>
+            <p>One alert per attack. Repeated detections are grouped, and every alert says why it fired.</p>
         </div>
-        <div class="top-actions">
-            <button id="loadHistoryBtn" class="btn btn-secondary">Load history</button>
-        </div>
+        <div class="actions"><button id="loadHistoryBtn" class="btn">Load history</button></div>
     </header>
-
+    <div id="alertFilters" class="toolbar" role="group" aria-label="Filter alerts"></div>
     <section class="card">
-        <div class="table-wrapper">
+        <div class="table-wrap">
             <table>
-                <thead>
-                    <tr>
-                        <th>Time</th>
-                        <th>Source</th>
-                        <th>Destination</th>
-                        <th>Type</th>
-                        <th>Severity</th>
-                        <th>Confidence</th>
-                        <th>Events</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Time</th><th>Attack</th><th>Source</th><th>Target</th><th>Severity</th><th>Confidence</th><th class="num">Events</th><th></th></tr></thead>
                 <tbody id="alertsTableBody"></tbody>
             </table>
         </div>
     </section>
 
 
-                <!-- Inspector panel: shows selected flow/alert details -->
-                <aside id="inspectorPanel" class="inspector-panel" aria-hidden="true">
-                    <div class="inspector-header">
-                        <h3 id="inspectorTitle">Inspector</h3>
-                        <button id="inspectorClose" class="btn btn-sm" aria-label="Close inspector">Close</button>
-                    </div>
-                    <div id="inspectorBody" class="inspector-body">
-                        <p class="empty-state"><em>Select a flow or alert to inspect details.</em></p>
-                    </div>
-                    <div class="inspector-footer">
-                        <button id="exportJsonBtn" class="btn btn-secondary">Export JSON</button>
-                    </div>
-                </aside>
+            <footer class="foot">
+                <span>Network Intrusion Detection System &middot; Flask and Socket.IO</span>
+                <span><span id="statusMessage" class="status-message">Disconnected</span> &nbsp; updated <span id="statusUpdated">--:--:--</span></span>
+            </footer>
+        </main>
+    </div>
 
-                <!-- Investigation modal -->
-                <div id="investigateModal" class="modal" aria-hidden="true">
-                    <div class="modal-content">
-                        <h3>Investigate Alert</h3>
-                        <label for="investigatorNameInput">Investigator name (optional)</label>
-                        <input id="investigatorNameInput" type="text" placeholder="Your name">
-                        <label for="investigationNoteInput">Note (optional)</label>
-                        <textarea id="investigationNoteInput" rows="4" placeholder="Describe what you investigated or findings"></textarea>
-                        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
-                            <button id="investigateCancelBtn" class="btn">Cancel</button>
-                            <button id="investigateSaveBtn" class="btn btn-primary">Save</button>
-                        </div>
-                    </div>
-                </div>
+    <aside id="inspectorPanel" class="inspector" aria-hidden="true">
+        <div class="insp-head"><div id="inspectorHead"></div><button id="inspectorClose" class="btn btn-sm" aria-label="Close details">Close</button></div>
+        <div id="inspectorBody" class="insp-body"></div>
+        <div class="insp-foot"><a id="inspectorPcap" class="btn btn-sm" hidden>Evidence PCAP</a><button id="exportJsonBtn" class="btn btn-sm">Export JSON</button></div>
+    </aside>
 
-                <footer>
-                    <div style="display:flex;gap:12px;align-items:center;justify-content:space-between;">
-                        <div>
-                            <strong>Network Intrusion Detection System</strong>
-                            <div class="muted">Built with Flask & Socket.IO</div>
-                        </div>
-                        <div id="statusSummaryCompact" style="text-align:right;">
-                            <div id="statusMessage" class="status-message status-info">Disconnected</div>
-                            <div class="muted small">Updated: <span id="statusUpdated">--:--:--</span></div>
-                        </div>
-                    </div>
-                </footer>
-            </main>
+    <div id="investigateModal" class="modal" aria-hidden="true">
+        <div class="modal-card" role="dialog" aria-label="Investigate alert">
+            <h3>Investigate alert</h3>
+            <label for="investigatorNameInput">Your name (optional)</label>
+            <input id="investigatorNameInput" type="text" placeholder="Analyst name">
+            <label for="investigationNoteInput">Findings</label>
+            <textarea id="investigationNoteInput" rows="4" placeholder="What did you check, and what did you conclude?"></textarea>
+            <div class="actions" style="justify-content:flex-end;margin-top:6px">
+                <button id="investigateCancelBtn" class="btn">Cancel</button>
+                <button id="investigateSaveBtn" class="btn btn-primary">Save</button>
+            </div>
+        </div>
     </div>
 
     <script src="demo-shim.js"></script>

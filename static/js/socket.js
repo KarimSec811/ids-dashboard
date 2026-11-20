@@ -18,13 +18,6 @@ export class SocketManager {
             s.emit('request_initial_data', { page: document.body.dataset.page || 'dashboard' });
         });
         s.on('disconnect', () => this.setStatus('Disconnected', 'error'));
-        s.on('connect_error', err => {
-            this.setStatus('Connection rejected or unavailable', 'error');
-            // Token-authenticated servers reject clients during the handshake;
-            // rejected clients cannot receive the server's auth_error event.
-            // Prompt only for an explicit rejection, not transient network errors.
-            if (!this._asked && /rejected/i.test(err?.message || '')) this._promptForToken();
-        });
 
         s.on('flow_update', d => Dashboard.addFlows(d.flows));   // full list (flows page, on load)
         s.on('flow_batch', d => Dashboard.addFlows(d.flows));    // live changes
@@ -40,18 +33,17 @@ export class SocketManager {
         s.on('system_health', d => this.showHealth(d));          // every 3 seconds
         s.on('status_update', d => {
             this.setStatus(d.status, d.color || 'info');
-            if ('running' in d) this.setButtons(d.running);
+            if ('running' in d) { this.setButtons(d.running); Dashboard.health.running = d.running; }
+            this.setSensor(d);
         });
         s.on('auth_error', () => {
             this.setStatus('Access token required', 'error');
-            if (!this._asked) this._promptForToken();
+            if (!this._asked) {
+                this._asked = true;
+                const t = prompt('This server needs an access token (IDS_API_TOKEN):');
+                if (t) { localStorage.setItem('ids_token', t); location.reload(); }
+            }
         });
-    }
-
-    _promptForToken() {
-        this._asked = true;
-        const t = prompt('This server needs an access token (IDS_API_TOKEN):');
-        if (t) { localStorage.setItem('ids_token', t); location.reload(); }
     }
 
     startIDS(pcap) { this.socket.emit('start_ids', pcap ? { pcap, speed: 10 } : {}); }
@@ -67,6 +59,13 @@ export class SocketManager {
         for (const id of ['startBtn', 'replayBtn']) { const b = $(id); if (b) b.disabled = !!running; }
         const stop = $('stopBtn');
         if (stop) stop.disabled = !running;
+        document.body.dataset.running = String(!!running);
+    }
+
+    setSensor(d) {
+        const run = !!d.running;
+        setText('sensorState', run ? (d.mode === 'replay' ? 'Replaying' : 'Capturing') : 'Stopped');
+        setText('sensorDetail', run ? (d.source || 'live') : (d.error || 'No capture running'));
     }
 
     showHealth(update) {
@@ -84,7 +83,12 @@ export class SocketManager {
         setText('packetRate', `${h.packets_per_sec ?? 0} pkt/s`);
         setText('packetRateLarge', h.packets_per_sec ?? 0);
         setText('attacksRateLarge', h.attacks_per_sec ?? 0);
-        setText('alertCountLarge', h.unacknowledged_alerts ?? h.active_alerts ?? 0);
+        const open = h.unacknowledged_alerts ?? h.active_alerts ?? 0;
+        setText('alertCountLarge', open);
+        const badge = $('alertCountLarge');
+        if (badge) badge.className = open ? 'count' : 'count zero';
+        setText('activeFlows', h.active_flows ?? 0);
+        if ('running' in update) this.setSensor({ running: update.running, mode: update.mode, source: update.source, error: update.error });
         if ('running' in update) this.setButtons(update.running);
     }
 }

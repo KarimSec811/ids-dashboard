@@ -33,7 +33,8 @@ export class SocketManager {
         s.on('system_health', d => this.showHealth(d));          // every 3 seconds
         s.on('status_update', d => {
             this.setStatus(d.status, d.color || 'info');
-            if ('running' in d) this.setButtons(d.running);
+            if ('running' in d) { this.setButtons(d.running); Dashboard.health.running = d.running; }
+            this.setSensor(d);
         });
         s.on('auth_error', () => {
             this.setStatus('Access token required', 'error');
@@ -58,6 +59,13 @@ export class SocketManager {
         for (const id of ['startBtn', 'replayBtn']) { const b = $(id); if (b) b.disabled = !!running; }
         const stop = $('stopBtn');
         if (stop) stop.disabled = !running;
+        document.body.dataset.running = String(!!running);
+    }
+
+    setSensor(d) {
+        const run = !!d.running;
+        setText('sensorState', run ? (d.mode === 'replay' ? 'Replaying' : 'Capturing') : 'Stopped');
+        setText('sensorDetail', run ? (d.source || 'live') : (d.error || 'No capture running'));
     }
 
     showHealth(update) {
@@ -75,7 +83,12 @@ export class SocketManager {
         setText('packetRate', `${h.packets_per_sec ?? 0} pkt/s`);
         setText('packetRateLarge', h.packets_per_sec ?? 0);
         setText('attacksRateLarge', h.attacks_per_sec ?? 0);
-        setText('alertCountLarge', h.unacknowledged_alerts ?? h.active_alerts ?? 0);
+        const open = h.unacknowledged_alerts ?? h.active_alerts ?? 0;
+        setText('alertCountLarge', open);
+        const badge = $('alertCountLarge');
+        if (badge) badge.className = open ? 'count' : 'count zero';
+        setText('activeFlows', h.active_flows ?? 0);
+        if ('running' in update) this.setSensor({ running: update.running, mode: update.mode, source: update.source, error: update.error });
         if ('running' in update) this.setButtons(update.running);
     }
 }

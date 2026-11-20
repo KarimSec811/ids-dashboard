@@ -1,35 +1,25 @@
 {% extends 'base.html' %}
+{% block title %}Export · IDS Console{% endblock %}
 {% block content %}
-    <header class="topbar">
-        <div class="topbar-left">
-            <h1>Export</h1>
-            <p>Export IDS data for offline review and analysis.</p>
-        </div>
+    <header class="page-head">
+        <div><h1>Export</h1><p>Take data out for offline review and reports.</p></div>
     </header>
-
     <section class="card">
-        <div class="card-header">
-            <div>
-                <h2>Export Options</h2>
-                <p>Export flow summaries or raw PCAPs for incident investigation.</p>
-            </div>
+        <div class="card-head"><h2>Tables</h2></div>
+        <div class="card-body actions">
+            <a class="btn" href="/export/flows.csv">Flows (CSV)</a>
+            <a class="btn" href="/export/alerts.csv">Alerts (CSV)</a>
         </div>
-        <div class="card-body" style="padding: 24px; gap: 16px; display: grid;">
-            <div style="display:flex;gap:12px;flex-wrap:wrap;">
-                <a class="btn btn-secondary" href="/export/flows.csv">Export current flows (CSV)</a>
-                <a class="btn btn-secondary" href="/export/alerts.csv">Export alerts (CSV)</a>
+    </section>
+    <section class="card" style="margin-top:16px">
+        <div class="card-head"><h2>Evidence capture for an alert</h2></div>
+        <div class="card-body">
+            <p class="sub" style="margin-bottom:14px">Alerts from a replayed sample give the exact packets. For live alerts packets are not stored, so this records the next few seconds of traffic between the same hosts.</p>
+            <div class="actions">
+                <select id="alertSelect" style="min-width:360px" aria-label="Alert"><option value="">Select an alert…</option></select>
+                <button id="exportPcapBtn" class="btn btn-primary">Download PCAP</button>
             </div>
-
-            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-                <label for="alertSelect"><strong>Export suspicious traffic PCAP</strong></label>
-                <select id="alertSelect" style="min-width:320px;">
-                    <option value="">Select recent alert...</option>
-                </select>
-                <button id="exportPcapBtn" class="btn btn-secondary">Export PCAP</button>
-            </div>
-
-            <p class="status-summary">Alerts from a replayed sample give the exact packets. For live alerts, packets are not stored, so the export records the next few seconds of traffic between the same hosts.</p>
-            <p id="exportMsg" role="status"></p>
+            <p id="exportMsg" role="status" style="margin-top:12px"></p>
         </div>
     </section>
 {% endblock %}

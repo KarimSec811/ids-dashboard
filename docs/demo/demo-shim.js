@@ -81,8 +81,8 @@
 
     const banner = () => {
         const b = document.createElement('div');
-        b.setAttribute('style', 'position:sticky;top:0;z-index:1000;background:#1e3a8a;color:#fff;padding:8px 12px;text-align:center;font:14px sans-serif');
-        b.innerHTML = 'Demo mode: a recorded replay of <code>demo_mixed.pcap</code>, no server running. Click <b>Start IDS</b> to replay it. ' +
+        b.setAttribute('style', 'position:sticky;top:0;z-index:30;background:#1e3a8a;color:#fff;padding:8px 12px;text-align:center;font:14px sans-serif');
+        b.innerHTML = 'Demo mode: a recorded replay of <code>demo_mixed.pcap</code>, no server running. Click <b>Start capture</b> to replay it. ' +
             '<a style="color:#bfdbfe" href="https://github.com/KarimSec811/ids-dashboard">Source on GitHub</a>';
         document.body.insertAdjacentElement('afterbegin', b);
     };
