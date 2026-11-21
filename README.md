@@ -43,12 +43,23 @@ flowchart LR
 ## How it Looks like
 
 
-<img width="1440" height="900" alt="a-dashboard" src="https://github.com/user-attachments/assets/be991016-d025-4afe-ae65-ef78097be6c9" />
+![Dashboard Screenshot](docs/img/01-dashboard.png)
 
 --------------------------------------------------------------------------------------------------------------
 
-<img width="1440" height="900" alt="02-alerts" src="https://github.com/user-attachments/assets/9784b952-6bf4-4567-ba2b-7fdf33a1e40f" />
+![Dashboard Screenshot](docs/img/02-alerts.png)
 
+--------------------------------------------------------------------------------------------------------------
+
+![Dashboard Screenshot](docs/img/03-inspector.png)
+
+--------------------------------------------------------------------------------------------------------------
+
+![Dashboard Screenshot](docs/img/04-flows.png)
+
+--------------------------------------------------------------------------------------------------------------
+
+![Dashboard Screenshot](docs/img/05-dashboard-dark.png)
 
 ## Results with real attack tools
 
