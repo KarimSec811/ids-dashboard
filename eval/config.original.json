@@ -1,0 +1,1682 @@
+{
+  "max_packets": 1000,
+  "max_duration": 1200,
+  "portsweep_port_threshold": 5,
+  "thresholds": {
+    "neptune": {
+      "protocol_types": [
+        "TCP"
+      ],
+      "flags": [
+        "REJ",
+        "RSTO",
+        "S0"
+      ],
+      "zero_fields": [
+        "duration",
+        "src_bytes",
+        "dst_bytes",
+        "land",
+        "wrong_fragment",
+        "urgent",
+        "hot",
+        "num_failed_logins",
+        "logged_in",
+        "num_compromised",
+        "root_shell",
+        "su_attempted",
+        "num_root",
+        "num_file_creations",
+        "num_shells",
+        "num_access_files",
+        "num_outbound_cmds",
+        "is_host_login",
+        "is_guest_login"
+      ],
+      "ranges": {
+        "count": [
+          1,
+          302
+        ],
+        "srv_count": [
+          1,
+          150
+        ],
+        "serror_rate": [
+          0,
+          1
+        ],
+        "srv_serror_rate": [
+          0,
+          1
+        ],
+        "rerror_rate": [
+          0,
+          1
+        ],
+        "srv_rerror_rate": [
+          0,
+          1
+        ],
+        "same_srv_rate": [
+          0,
+          1
+        ],
+        "diff_srv_rate": [
+          0,
+          1
+        ],
+        "dst_host_srv_diff_host_rate": [
+          0,
+          0.5
+        ],
+        "srv_diff_host_rate": [
+          0,
+          1
+        ],
+        "dst_host_same_srv_rate": [
+          0,
+          1
+        ],
+        "dst_host_diff_srv_rate": [
+          0,
+          1
+        ],
+        "dst_host_same_src_port_rate": [
+          0,
+          1
+        ],
+        "dst_host_serror_rate": [
+          0,
+          1
+        ],
+        "dst_host_srv_serror_rate": [
+          0,
+          1
+        ],
+        "dst_host_srv_rerror_rate": [
+          0,
+          1
+        ],
+        "dst_host_count": [
+          1,
+          255
+        ],
+        "dst_host_srv_count": [
+          1,
+          255
+        ]
+      }
+    },
+    "portsweep": {
+      "protocol_types": [
+        "TCP"
+      ],
+      "services": [
+        "daytime",
+        "echo",
+        "ftp",
+        "gopher",
+        "http",
+        "http_443",
+        "iso_tsap",
+        "link",
+        "netbios_dgm",
+        "netstat",
+        "nnsp",
+        "private",
+        "smtp",
+        "sunrpc",
+        "systat",
+        "telnet",
+        "time"
+      ],
+      "flags": [
+        "OTH",
+        "REJ",
+        "RSTO",
+        "RSTR"
+      ],
+      "zero_fields": [
+        "dst_bytes",
+        "land",
+        "wrong_fragment",
+        "urgent",
+        "num_failed_logins",
+        "hot",
+        "num_compromised",
+        "root_shell",
+        "su_attempted",
+        "num_root",
+        "num_file_creations",
+        "num_shells",
+        "num_access_files",
+        "num_outbound_cmds",
+        "is_host_login",
+        "is_guest_login",
+        "srv_diff_host_rate",
+        "dst_host_srv_serror_rate"
+      ],
+      "ranges": {
+        "duration": [
+          0,
+          43000
+        ],
+        "src_bytes": [
+          0,
+          8
+        ],
+        "hot": [
+          0,
+          1
+        ],
+        "srv_count": [
+          0,
+          3
+        ],
+        "dst_host_serror_rate": [
+          0,
+          1
+        ],
+        "logged_in": [
+          0,
+          1
+        ],
+        "count": [
+          1,
+          182
+        ],
+        "serror_rate": [
+          0,
+          1
+        ],
+        "rerror_rate": [
+          0,
+          1
+        ],
+        "srv_rerror_rate": [
+          0,
+          1
+        ],
+        "same_srv_rate": [
+          0,
+          1
+        ],
+        "diff_srv_rate": [
+          0,
+          1
+        ],
+        "dst_host_count": [
+          3,
+          255
+        ],
+        "dst_host_srv_count": [
+          1,
+          4
+        ],
+        "dst_host_same_srv_rate": [
+          0,
+          1
+        ],
+        "dst_host_diff_srv_rate": [
+          0,
+          1
+        ],
+        "dst_host_srv_diff_host_rate": [
+          0,
+          1
+        ],
+        "dst_host_same_src_port_rate": [
+          0,
+          1
+        ],
+        "dst_host_rerror_rate": [
+          0,
+          1
+        ],
+        "dst_host_srv_rerror_rate": [
+          0,
+          1
+        ]
+      }
+    },
+    "satan": {
+      "protocol_types": [
+        "TCP",
+        "ICMP",
+        "UDP"
+      ],
+      "services": [
+        "bgp",
+        "domain_u",
+        "ftp_data",
+        "IRC",
+        "link",
+        "login",
+        "nntp",
+        "other",
+        "pop_2",
+        "private",
+        "remote_job",
+        "shell",
+        "sql_net",
+        "urp_i",
+        "uucp"
+      ],
+      "flags": [
+        "REJ",
+        "S0",
+        "RSTOS0",
+        "SF"
+      ],
+      "zero_fields": [
+        "land",
+        "wrong_fragment",
+        "urgent",
+        "hot",
+        "num_failed_logins",
+        "num_compromised",
+        "root_shell",
+        "su_attempted",
+        "num_root",
+        "num_file_creations",
+        "num_shells",
+        "num_access_files",
+        "num_outbound_cmds",
+        "is_host_login",
+        "is_guest_login"
+      ],
+      "ranges": {
+        "duration": [
+          0,
+          11
+        ],
+        "src_bytes": [
+          0,
+          2000
+        ],
+        "dst_bytes": [
+          0,
+          300
+        ],
+        "logged_in": [
+          0,
+          1
+        ],
+        "count": [
+          1,
+          511
+        ],
+        "srv_count": [
+          1,
+          135
+        ],
+        "serror_rate": [
+          0,
+          0.27
+        ],
+        "srv_serror_rate": [
+          0,
+          1
+        ],
+        "srv_rerror_rate": [
+          0,
+          1
+        ],
+        "srv_diff_host_rate": [
+          0,
+          0.5
+        ],
+        "rerror_rate": [
+          0,
+          1
+        ],
+        "same_srv_rate": [
+          0,
+          1
+        ],
+        "diff_srv_rate": [
+          0,
+          1
+        ],
+        "dst_host_count": [
+          4,
+          255
+        ],
+        "dst_host_srv_count": [
+          1,
+          200
+        ],
+        "dst_host_same_srv_rate": [
+          0,
+          0.83
+        ],
+        "dst_host_diff_srv_rate": [
+          0.02,
+          1
+        ],
+        "dst_host_same_src_port_rate": [
+          0,
+          1
+        ],
+        "dst_host_serror_rate": [
+          0,
+          0.5
+        ],
+        "dst_host_srv_serror_rate": [
+          0,
+          1
+        ],
+        "dst_host_rerror_rate": [
+          0,
+          1
+        ],
+        "dst_host_srv_rerror_rate": [
+          0,
+          1
+        ]
+      }
+    },
+    "ipsweep": {
+      "protocol_types": [
+        "TCP",
+        "ICMP"
+      ],
+      "flags": [
+        "REJ",
+        "RSTO",
+        "SF"
+      ],
+      "zero_fields": [
+        "duration",
+        "dst_bytes",
+        "land",
+        "wrong_fragment",
+        "urgent",
+        "hot",
+        "num_failed_logins",
+        "logged_in",
+        "num_compromised",
+        "root_shell",
+        "su_attempted",
+        "num_root",
+        "num_file_creations",
+        "num_shells",
+        "num_access_files",
+        "num_outbound_cmds",
+        "is_host_login",
+        "is_guest_login",
+        "serror_rate",
+        "srv_serror_rate",
+        "rerror_rate",
+        "srv_rerror_rate",
+        "dst_host_serror_rate",
+        "dst_host_srv_serror_rate",
+        "dst_host_rerror_rate",
+        "dst_host_srv_rerror_rate",
+        "same_srv_rate",
+        "diff_srv_rate"
+      ],
+      "ranges": {
+        "src_bytes": [
+          0,
+          18
+        ],
+        "count": [
+          1,
+          2
+        ],
+        "srv_count": [
+          1,
+          50
+        ],
+        "dst_host_same_src_port_rate": [
+          0.01,
+          1
+        ],
+        "dst_host_count": [
+          1,
+          214
+        ],
+        "dst_host_srv_count": [
+          1,
+          255
+        ],
+        "dst_host_srv_diff_host_rate": [
+          0,
+          1
+        ],
+        "dst_host_same_srv_rate": [
+          0.01,
+          1
+        ],
+        "srv_diff_host_rate": [
+          0,
+          1
+        ],
+        "dst_host_diff_srv_rate": [
+          0,
+          0.04
+        ],
+        "same_srv_rate": [
+          1,
+          1
+        ]
+      }
+    },
+    "smurf": {
+      "protocol_types": [
+        "ICMP"
+      ],
+      "zero_fields": [
+        "duration",
+        "dst_bytes",
+        "land",
+        "wrong_fragment",
+        "urgent",
+        "hot",
+        "num_failed_logins",
+        "logged_in",
+        "num_compromised",
+        "root_shell",
+        "su_attempted",
+        "num_root",
+        "num_file_creations",
+        "num_shells",
+        "num_access_files",
+        "num_outbound_cmds",
+        "is_host_login",
+        "is_guest_login",
+        "serror_rate",
+        "srv_serror_rate",
+        "rerror_rate",
+        "srv_rerror_rate",
+        "diff_srv_rate",
+        "dst_host_srv_serror_rate",
+        "dst_host_srv_rerror_rate"
+      ],
+      "ranges": {
+        "src_bytes": [
+          508,
+          1032
+        ],
+        "count": [
+          2,
+          511
+        ],
+        "srv_count": [
+          2,
+          511
+        ],
+        "srv_diff_host_rate": [
+          0,
+          0.02
+        ],
+        "dst_host_count": [
+          5,
+          255
+        ],
+        "dst_host_srv_count": [
+          4,
+          255
+        ],
+        "dst_host_same_srv_rate": [
+          0.02,
+          1
+        ],
+        "dst_host_diff_srv_rate": [
+          0,
+          0.91
+        ],
+        "dst_host_same_src_port_rate": [
+          0.02,
+          1
+        ],
+        "dst_host_srv_diff_host_rate": [
+          0,
+          0.4
+        ],
+        "dst_host_serror_rate": [
+          0,
+          0.15
+        ],
+        "dst_host_rerror_rate": [
+          0,
+          0.82
+        ],
+        "same_srv_rate": [
+          1,
+          1
+        ]
+      }
+    },
+    "back": {
+      "protocol_types": [
+        "TCP"
+      ],
+      "services": [
+        "http"
+      ],
+      "flags": [
+        "RSTR",
+        "S1",
+        "S2",
+        "SF"
+      ],
+      "zero_fields": [
+        "land",
+        "wrong_fragment",
+        "urgent",
+        "num_failed_logins",
+        "root_shell",
+        "su_attempted",
+        "num_root",
+        "num_file_creations",
+        "num_shells",
+        "num_access_files",
+        "num_outbound_cmds",
+        "is_host_login",
+        "is_guest_login",
+        "dst_host_srv_diff_host_rate",
+        "diff_srv_rate",
+        "dst_host_same_src_port_rate"
+      ],
+      "ranges": {
+        "duration": [
+          0,
+          10
+        ],
+        "src_bytes": [
+          13000,
+          55000
+        ],
+        "dst_bytes": [
+          1000,
+          8500
+        ],
+        "num_compromised": [
+          0,
+          1
+        ],
+        "count": [
+          1,
+          10
+        ],
+        "srv_count": [
+          1,
+          20
+        ],
+        "hot": [
+          0,
+          3
+        ],
+        "serror_rate": [
+          0,
+          0.5
+        ],
+        "srv_serror_rate": [
+          0,
+          0.5
+        ],
+        "rerror_rate": [
+          0,
+          1
+        ],
+        "srv_rerror_rate": [
+          0,
+          1
+        ],
+        "srv_diff_host_rate": [
+          0,
+          1
+        ],
+        "dst_host_srv_count": [
+          1,
+          255
+        ],
+        "dst_host_same_srv_rate": [
+          0.9,
+          1
+        ],
+        "dst_host_serror_rate": [
+          0,
+          0.01
+        ],
+        "dst_host_srv_serror_rate": [
+          0,
+          0.01
+        ],
+        "dst_host_rerror_rate": [
+          0,
+          0.07
+        ],
+        "dst_host_srv_rerror_rate": [
+          0,
+          0.07
+        ],
+        "dst_host_diff_srv_rate": [
+          0,
+          0.01
+        ],
+        "logged_in": [
+          0.5,
+          1
+        ],
+        "same_srv_rate": [
+          0.5,
+          1
+        ],
+        "dst_host_count": [
+          1,
+          255
+        ]
+      }
+    },
+    "teardrop": {
+      "protocol_types": [
+        "UDP"
+      ],
+      "services": [
+        "private"
+      ],
+      "flags": [
+        "SF"
+      ],
+      "zero_fields": [
+        "duration",
+        "dst_bytes",
+        "land",
+        "urgent",
+        "hot",
+        "num_failed_logins",
+        "logged_in",
+        "num_compromised",
+        "root_shell",
+        "su_attempted",
+        "num_root",
+        "num_file_creations",
+        "num_shells",
+        "num_access_files",
+        "num_outbound_cmds",
+        "is_host_login",
+        "is_guest_login",
+        "serror_rate",
+        "rerror_rate",
+        "srv_serror_rate",
+        "srv_rerror_rate",
+        "srv_diff_host_rate",
+        "dst_host_srv_diff_host_rate",
+        "dst_host_srv_serror_rate",
+        "dst_host_srv_rerror_rate"
+      ],
+      "ranges": {
+        "wrong_fragment": [
+          1,
+          3
+        ],
+        "count": [
+          1,
+          100
+        ],
+        "srv_count": [
+          1,
+          100
+        ],
+        "diff_srv_rate": [
+          0,
+          1
+        ],
+        "dst_host_count": [
+          21,
+          255
+        ],
+        "dst_host_srv_count": [
+          1,
+          100
+        ],
+        "src_bytes": [
+          10,
+          28
+        ],
+        "same_srv_rate": [
+          0.5,
+          1
+        ],
+        "dst_host_same_srv_rate": [
+          0,
+          0.82
+        ],
+        "dst_host_diff_srv_rate": [
+          0.02,
+          0.2
+        ],
+        "dst_host_same_src_port_rate": [
+          0,
+          0.82
+        ],
+        "dst_host_serror_rate": [
+          0,
+          0.25
+        ],
+        "dst_host_rerror_rate": [
+          0,
+          0.51
+        ]
+      }
+    },
+    "warezclient": {
+      "protocol_types": [
+        "TCP"
+      ],
+      "services": [
+        "ftp",
+        "ftp_data",
+        "other"
+      ],
+      "flags": [
+        "RSTR",
+        "RSTO",
+        "S2",
+        "S3",
+        "SF"
+      ],
+      "zero_fields": [
+        "land",
+        "wrong_fragment",
+        "urgent",
+        "num_failed_logins",
+        "root_shell",
+        "su_attempted",
+        "num_root",
+        "num_file_creations",
+        "num_shells",
+        "num_compromised",
+        "num_access_files",
+        "num_outbound_cmds",
+        "is_host_login"
+      ],
+      "ranges": {
+        "duration": [
+          0,
+          15200
+        ],
+        "src_bytes": [
+          30,
+          5200000
+        ],
+        "dst_bytes": [
+          0,
+          2500
+        ],
+        "is_guest_login": [
+          0,
+          1
+        ],
+        "count": [
+          1,
+          3
+        ],
+        "serror_rate": [
+          0,
+          1
+        ],
+        "srv_rerror_rate": [
+          0,
+          1
+        ],
+        "hot": [
+          1,
+          28
+        ],
+        "srv_count": [
+          1,
+          19
+        ],
+        "srv_serror_rate": [
+          0,
+          1
+        ],
+        "rerror_rate": [
+          0,
+          1
+        ],
+        "same_srv_rate": [
+          0,
+          1
+        ],
+        "diff_srv_rate": [
+          0,
+          1
+        ],
+        "srv_diff_host_rate": [
+          0,
+          1
+        ],
+        "dst_host_count": [
+          1,
+          255
+        ],
+        "dst_host_srv_count": [
+          1,
+          144
+        ],
+        "dst_host_same_srv_rate": [
+          0,
+          1
+        ],
+        "dst_host_diff_srv_rate": [
+          0,
+          0.67
+        ],
+        "dst_host_same_src_port_rate": [
+          0,
+          1
+        ],
+        "dst_host_srv_diff_host_rate": [
+          0,
+          0.67
+        ],
+        "dst_host_serror_rate": [
+          0,
+          1
+        ],
+        "dst_host_srv_serror_rate": [
+          0,
+          1
+        ],
+        "dst_host_rerror_rate": [
+          0,
+          0.33
+        ],
+        "dst_host_srv_rerror_rate": [
+          0,
+          0.12
+        ]
+      }
+    },
+    "pod": {
+      "protocol_types": [
+        "ICMP"
+      ],
+      "services": [
+        "ecr_i",
+        "tim_i",
+        "other"
+      ],
+      "flags": [
+        "SF"
+      ],
+      "zero_fields": [
+        "duration",
+        "dst_bytes",
+        "land",
+        "urgent",
+        "hot",
+        "num_failed_logins",
+        "logged_in",
+        "num_compromised",
+        "root_shell",
+        "su_attempted",
+        "num_root",
+        "num_file_creations",
+        "num_shells",
+        "num_access_files",
+        "num_outbound_cmds",
+        "is_host_login",
+        "is_guest_login",
+        "serror_rate",
+        "srv_serror_rate",
+        "rerror_rate",
+        "srv_rerror_rate",
+        "diff_srv_rate",
+        "dst_host_srv_serror_rate",
+        "dst_host_srv_rerror_rate"
+      ],
+      "ranges": {
+        "src_bytes": [
+          564,
+          1480
+        ],
+        "wrong_fragment": [
+          0,
+          1
+        ],
+        "same_srv_rate": [
+          0.5,
+          1
+        ],
+        "count": [
+          1,
+          5
+        ],
+        "srv_count": [
+          1,
+          5
+        ],
+        "srv_diff_host_rate": [
+          0,
+          0.7
+        ],
+        "dst_host_count": [
+          1,
+          255
+        ],
+        "dst_host_srv_count": [
+          1,
+          255
+        ],
+        "dst_host_same_srv_rate": [
+          0,
+          1
+        ],
+        "dst_host_diff_srv_rate": [
+          0,
+          1
+        ],
+        "dst_host_same_src_port_rate": [
+          0,
+          1
+        ],
+        "dst_host_srv_diff_host_rate": [
+          0,
+          0.67
+        ],
+        "dst_host_serror_rate": [
+          0,
+          0.99
+        ],
+        "dst_host_rerror_rate": [
+          0,
+          0.89
+        ]
+      }
+    },
+    "guess_passwd": {
+      "protocol_types": [
+        "TCP"
+      ],
+      "services": [
+        "ftp",
+        "pop_3",
+        "telnet"
+      ],
+      "flags": [
+        "RSTR",
+        "RSTO",
+        "S3",
+        "SF"
+      ],
+      "zero_fields": [
+        "land",
+        "wrong_fragment",
+        "urgent",
+        "hot",
+        "num_compromised",
+        "root_shell",
+        "su_attempted",
+        "num_root",
+        "num_file_creations",
+        "num_shells",
+        "num_access_files",
+        "num_outbound_cmds",
+        "is_host_login"
+      ],
+      "ranges": {
+        "duration": [
+          0,
+          60
+        ],
+        "src_bytes": [
+          15,
+          133
+        ],
+        "dst_bytes": [
+          46,
+          2437
+        ],
+        "num_failed_logins": [
+          0,
+          1
+        ],
+        "logged_in": [
+          0,
+          1
+        ],
+        "is_guest_login": [
+          0,
+          1
+        ],
+        "count": [
+          1,
+          8
+        ],
+        "srv_count": [
+          1,
+          3
+        ],
+        "serror_rate": [
+          0,
+          1
+        ],
+        "srv_serror_rate": [
+          0,
+          1
+        ],
+        "rerror_rate": [
+          0,
+          1
+        ],
+        "srv_rerror_rate": [
+          0,
+          1
+        ],
+        "same_srv_rate": [
+          0.12,
+          1
+        ],
+        "diff_srv_rate": [
+          0,
+          1
+        ],
+        "srv_diff_host_rate": [
+          0,
+          1
+        ],
+        "dst_host_count": [
+          1,
+          255
+        ],
+        "dst_host_srv_count": [
+          1,
+          255
+        ],
+        "dst_host_same_srv_rate": [
+          0,
+          1
+        ],
+        "dst_host_srv_serror_rate": [
+          0,
+          0.2
+        ],
+        "dst_host_diff_srv_rate": [
+          0,
+          0.35
+        ],
+        "dst_host_same_src_port_rate": [
+          0,
+          1
+        ],
+        "dst_host_srv_diff_host_rate": [
+          0,
+          0.75
+        ],
+        "dst_host_serror_rate": [
+          0,
+          0.02
+        ],
+        "dst_host_rerror_rate": [
+          0,
+          0.65
+        ],
+        "dst_host_srv_rerror_rate": [
+          0,
+          1
+        ]
+      }
+    },
+    "mscan": {
+      "protocol_types": [
+        "TCP"
+      ],
+      "services": [
+        "telnet"
+      ],
+      "flags": [
+        "RSTR",
+        "S2",
+        "S3",
+        "SF"
+      ],
+      "zero_fields": [
+        "land",
+        "wrong_fragment",
+        "urgent",
+        "hot",
+        "num_failed_logins",
+        "num_compromised",
+        "root_shell",
+        "su_attempted",
+        "num_root",
+        "num_file_creations",
+        "num_shells",
+        "num_access_files",
+        "num_outbound_cmds",
+        "is_host_login",
+        "is_guest_login"
+      ],
+      "ranges": {
+        "duration": [
+          0,
+          9
+        ],
+        "src_bytes": [
+          0,
+          44
+        ],
+        "dst_bytes": [
+          0,
+          1254
+        ],
+        "logged_in": [
+          0,
+          1
+        ],
+        "count": [
+          1,
+          5
+        ],
+        "srv_count": [
+          1,
+          35
+        ],
+        "serror_rate": [
+          0,
+          1
+        ],
+        "srv_serror_rate": [
+          0,
+          1
+        ],
+        "rerror_rate": [
+          0,
+          1
+        ],
+        "srv_rerror_rate": [
+          0,
+          1
+        ],
+        "same_srv_rate": [
+          0.12,
+          1
+        ],
+        "diff_srv_rate": [
+          0,
+          1
+        ],
+        "srv_diff_host_rate": [
+          0,
+          1
+        ],
+        "dst_host_count": [
+          1,
+          255
+        ],
+        "dst_host_srv_count": [
+          1,
+          248
+        ],
+        "dst_host_same_srv_rate": [
+          0,
+          1
+        ],
+        "dst_host_srv_serror_rate": [
+          0,
+          1
+        ],
+        "dst_host_diff_srv_rate": [
+          0,
+          1
+        ],
+        "dst_host_same_src_port_rate": [
+          0,
+          1
+        ],
+        "dst_host_srv_diff_host_rate": [
+          0,
+          0.5
+        ],
+        "dst_host_serror_rate": [
+          0,
+          1
+        ],
+        "dst_host_rerror_rate": [
+          0,
+          1
+        ],
+        "dst_host_srv_rerror_rate": [
+          0,
+          1
+        ]
+      }
+    },
+    "processtable": {
+      "protocol_types": [
+        "TCP"
+      ],
+      "services": [
+        "ecr_i",
+        "tim_i",
+        "other"
+      ],
+      "flags": [
+        "SF"
+      ],
+      "zero_fields": [
+        "land",
+        "wrong_fragment",
+        "urgent",
+        "hot",
+        "num_failed_logins",
+        "logged_in",
+        "num_compromised",
+        "root_shell",
+        "su_attempted",
+        "num_root",
+        "num_file_creations",
+        "num_shells",
+        "num_access_files",
+        "num_outbound_cmds",
+        "is_host_login",
+        "is_guest_login",
+        "dst_host_srv_diff_host_rate"
+      ],
+      "ranges": {
+        "duration": [
+          0,
+          8233
+        ],
+        "src_bytes": [
+          0,
+          1
+        ],
+        "dst_bytes": [
+          15,
+          44
+        ],
+        "count": [
+          1,
+          5
+        ],
+        "srv_count": [
+          1,
+          32
+        ],
+        "serror_rate": [
+          0,
+          1
+        ],
+        "srv_serror_rate": [
+          0,
+          1
+        ],
+        "rerror_rate": [
+          0,
+          1
+        ],
+        "srv_rerror_rate": [
+          0,
+          1
+        ],
+        "same_srv_rate": [
+          0.5,
+          1
+        ],
+        "diff_srv_rate": [
+          0,
+          1
+        ],
+        "srv_diff_host_rate": [
+          0,
+          1
+        ],
+        "dst_host_srv_count": [
+          3,
+          253
+        ],
+        "dst_host_count": [
+          5,
+          255
+        ],
+        "dst_host_same_srv_rate": [
+          0.01,
+          0.9
+        ],
+        "dst_host_srv_serror_rate": [
+          0,
+          0.84
+        ],
+        "dst_host_diff_srv_rate": [
+          0.01,
+          0.87
+        ],
+        "dst_host_same_src_port_rate": [
+          0,
+          0.5
+        ],
+        "dst_host_serror_rate": [
+          0,
+          1
+        ],
+        "dst_host_rerror_rate": [
+          0,
+          1
+        ],
+        "dst_host_srv_rerror_rate": [
+          0,
+          0.5
+        ]
+      }
+    }
+  },
+  "interface": "Wi-Fi",
+  "detection": {
+    "match_threshold": 0.85,
+    "half_open_grace_seconds": 0.5,
+    "half_open_min_count": 3,
+    "rule_active_window_seconds": 15.0
+  },
+  "ipsweep_host_threshold": 5,
+  "geoip_db_path": null,
+  "ioc_list_path": null,
+  "alerts_db_path": "data/alerts.db",
+  "alerts_persist_path": null,
+  "alerts_rotate_mb": 10,
+  "capture_bpf": null,
+  "sampling_rate": 1,
+  "capture_packet_limit": 200,
+  "capture_timeout_seconds": 10,
+  "threat_intel": {
+    "neptune": {
+      "display_name": "Neptune (SYN Flood)",
+      "severity": "high",
+      "mitre": {
+        "technique_id": "T1498.001",
+        "technique_name": "Network Denial of Service: Direct Flood",
+        "tactic": "Impact"
+      },
+      "description": "A high rate of half-open TCP connections aimed at one host, typical of a SYN-flood resource-exhaustion attack.",
+      "recommendation": [
+        "Enable SYN cookies on the target host",
+        "Rate-limit inbound SYN packets at the perimeter",
+        "Inspect firewall/connection-table logs for the source"
+      ],
+      "red_team": {
+        "objective": "Denial of service -- exhaust the target's connection table",
+        "common_tools": [
+          "hping3",
+          "nmap --scan-flags SYN (at volume)"
+        ],
+        "related_telemetry": [
+          "Firewall connection-table exhaustion alerts",
+          "Zeek conn.log elevated S0-state ratio"
+        ]
+      }
+    },
+    "portsweep": {
+      "display_name": "Port Sweep",
+      "severity": "medium",
+      "mitre": {
+        "technique_id": "T1046",
+        "technique_name": "Network Service Discovery",
+        "tactic": "Discovery"
+      },
+      "description": "One source touching many distinct ports on a single host in a short window -- reconnaissance to enumerate open services.",
+      "recommendation": [
+        "Rate-limit or temporarily block the source IP",
+        "Review which scanned services are actually meant to be exposed"
+      ],
+      "red_team": {
+        "objective": "Reconnaissance -- enumerate open services",
+        "common_tools": [
+          "Nmap (-sS/-p-)",
+          "Masscan"
+        ],
+        "related_telemetry": [
+          "Firewall deny logs across many ports from one source"
+        ]
+      }
+    },
+    "satan": {
+      "display_name": "SATAN Probe",
+      "severity": "medium",
+      "mitre": {
+        "technique_id": "T1595",
+        "technique_name": "Active Scanning",
+        "tactic": "Reconnaissance"
+      },
+      "description": "Traffic matching a SATAN-style scanner signature -- broad probing across services.",
+      "recommendation": [
+        "Restrict scanning tools to authorized management networks",
+        "Patch reachable services the scan identified"
+      ],
+      "red_team": {
+        "objective": "Identify vulnerable services for follow-on exploitation",
+        "common_tools": [
+          "Nessus",
+          "OpenVAS",
+          "Nmap -sV/-A"
+        ],
+        "related_telemetry": [
+          "Vulnerability-scanner signature hits"
+        ]
+      }
+    },
+    "ipsweep": {
+      "display_name": "IP Sweep",
+      "severity": "medium",
+      "mitre": {
+        "technique_id": "T1018",
+        "technique_name": "Remote System Discovery",
+        "tactic": "Discovery"
+      },
+      "description": "One source touching many distinct destination hosts in a short window -- host-discovery sweep.",
+      "recommendation": [
+        "Rate-limit ICMP/connection attempts at the perimeter",
+        "Segment networks to limit sweep visibility"
+      ],
+      "red_team": {
+        "objective": "Map live hosts before targeting them",
+        "common_tools": [
+          "Nmap -sn",
+          "fping",
+          "Angry IP Scanner"
+        ],
+        "related_telemetry": [
+          "ICMP echo requests to many sequential addresses"
+        ]
+      }
+    },
+    "smurf": {
+      "display_name": "Smurf (ICMP Amplification)",
+      "severity": "high",
+      "mitre": {
+        "technique_id": "T1498.002",
+        "technique_name": "Network Denial of Service: Reflection Amplification",
+        "tactic": "Impact"
+      },
+      "description": "A large volume of unsolicited ICMP echo replies from many sources converging on one victim -- spoofed-source amplification flood.",
+      "recommendation": [
+        "Disable IP-directed broadcast on routers",
+        "Apply ingress/egress filtering (BCP38)",
+        "Rate-limit ICMP at the perimeter"
+      ],
+      "red_team": {
+        "objective": "DoS via amplification using reflected traffic",
+        "common_tools": [
+          "Classic smurf tooling",
+          "Custom ICMP spoofers"
+        ],
+        "related_telemetry": [
+          "High-volume unsolicited ICMP echo-reply traffic"
+        ]
+      }
+    },
+    "back": {
+      "display_name": "Back (HTTP DoS)",
+      "severity": "medium",
+      "mitre": {
+        "technique_id": "T1499.004",
+        "technique_name": "Endpoint DoS: Application Exhaustion Flood",
+        "tactic": "Impact"
+      },
+      "description": "Traffic consistent with the 'back' attack -- crafted, expensive HTTP requests intended to exhaust a web server.",
+      "recommendation": [
+        "Enforce request URL/path length limits",
+        "Add a WAF rule for the offending pattern"
+      ],
+      "red_team": {
+        "objective": "Exhaust web server workers with expensive requests",
+        "common_tools": [
+          "Custom long-path request scripts",
+          "Slowloris-style tools"
+        ],
+        "related_telemetry": [
+          "Web server logs with abnormally long URLs"
+        ]
+      }
+    },
+    "teardrop": {
+      "display_name": "Teardrop",
+      "severity": "medium",
+      "mitre": {
+        "technique_id": "T1499.004",
+        "technique_name": "Endpoint DoS: Application Exhaustion Flood",
+        "tactic": "Impact"
+      },
+      "description": "Overlapping, malformed IP fragments consistent with the classic teardrop attack.",
+      "recommendation": [
+        "Drop malformed/overlapping fragments at the firewall",
+        "Confirm OS/network stack is patched"
+      ],
+      "red_team": {
+        "objective": "Crash/hang a target via malformed fragment reassembly",
+        "common_tools": [
+          "Historical teardrop tooling",
+          "Scapy-crafted overlapping fragments"
+        ],
+        "related_telemetry": [
+          "IP fragments with invalid/overlapping offsets"
+        ]
+      }
+    },
+    "warezclient": {
+      "display_name": "Warez Client Activity",
+      "severity": "low",
+      "mitre": {
+        "technique_id": "T1567",
+        "technique_name": "Exfiltration Over Web Service",
+        "tactic": "Exfiltration"
+      },
+      "description": "Traffic pattern consistent with unauthorized bulk file transfer -- policy violation, possible compromised-host indicator.",
+      "recommendation": [
+        "Block known warez-associated hosts",
+        "Restrict outbound FTP from general user segments"
+      ],
+      "red_team": {
+        "objective": "Unauthorized file distribution / staging",
+        "common_tools": [
+          "Scripted FTP clients",
+          "Automated download bots"
+        ],
+        "related_telemetry": [
+          "High-volume FTP RETR sessions"
+        ]
+      }
+    },
+    "pod": {
+      "display_name": "Ping of Death",
+      "severity": "medium",
+      "mitre": {
+        "technique_id": "T1499.004",
+        "technique_name": "Endpoint DoS: Application Exhaustion Flood",
+        "tactic": "Impact"
+      },
+      "description": "An oversized/malformed ICMP packet consistent with the classic 'ping of death'.",
+      "recommendation": [
+        "Drop oversized/malformed ICMP at the firewall",
+        "Confirm OS network stack is patched"
+      ],
+      "red_team": {
+        "objective": "Destabilize a target via malformed oversized ICMP",
+        "common_tools": [
+          "Historical ping-of-death tools"
+        ],
+        "related_telemetry": [
+          "ICMP packets exceeding standard datagram size"
+        ]
+      }
+    },
+    "guess_passwd": {
+      "display_name": "Password Guessing",
+      "severity": "high",
+      "mitre": {
+        "technique_id": "T1110.001",
+        "technique_name": "Brute Force: Password Guessing",
+        "tactic": "Credential Access"
+      },
+      "description": "Repeated failed authentication attempts against a login service.",
+      "recommendation": [
+        "Enforce account lockout / login rate-limiting",
+        "Require MFA on the targeted service"
+      ],
+      "red_team": {
+        "objective": "Obtain valid credentials via repeated guessing",
+        "common_tools": [
+          "Hydra",
+          "Medusa",
+          "ncrack"
+        ],
+        "related_telemetry": [
+          "Repeated failed-auth events in auth logs"
+        ]
+      }
+    },
+    "mscan": {
+      "display_name": "Mscan (Mass Scan)",
+      "severity": "medium",
+      "mitre": {
+        "technique_id": "T1595",
+        "technique_name": "Active Scanning",
+        "tactic": "Reconnaissance"
+      },
+      "description": "Very broad, high-fan-out scanning across hosts and services.",
+      "recommendation": [
+        "Rate-limit or blackhole aggressive scanners",
+        "Cross-check against threat-intel scanner block lists"
+      ],
+      "red_team": {
+        "objective": "Identify exploitable targets at scale",
+        "common_tools": [
+          "Masscan",
+          "ZMap"
+        ],
+        "related_telemetry": [
+          "Very high fan-out across hosts and ports"
+        ]
+      }
+    },
+    "processtable": {
+      "display_name": "Process Table Exhaustion",
+      "severity": "high",
+      "mitre": {
+        "technique_id": "T1499.001",
+        "technique_name": "Endpoint DoS: OS Exhaustion Flood",
+        "tactic": "Impact"
+      },
+      "description": "Rapid, repeated connection attempts consistent with exhausting the target's OS process table.",
+      "recommendation": [
+        "Enforce per-source connection-rate limits",
+        "Apply OS-level resource limits on spawned processes"
+      ],
+      "red_team": {
+        "objective": "Exhaust OS process table via rapid connection spawning",
+        "common_tools": [
+          "Custom connection-flood scripts"
+        ],
+        "related_telemetry": [
+          "Rapid process-spawn/PID-exhaustion alerts"
+        ]
+      }
+    }
+  }
+}

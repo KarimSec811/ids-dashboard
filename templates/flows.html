@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Flows · IDS Console{% endblock %}
+{% block content %}
+    <header class="page-head">
+        <div>
+            <h1>Flows</h1>
+            <p>Connections as the sensor tracks them, newest first. Originator is always the side that sent the SYN.</p>
+        </div>
+    </header>
+    <div class="toolbar"><button id="flaggedOnly" class="chip" aria-pressed="false">Flagged only <b id="flaggedCount">0</b></button><span class="sub" id="flowTotal"></span></div>
+    <section class="card">
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Last seen</th><th>Source</th><th>Destination</th><th>Proto</th><th>Service</th><th>State</th><th>Result</th><th class="num">Bytes</th></tr></thead>
+                <tbody id="flowListBody"></tbody>
+            </table>
+        </div>
+    </section>
+{% endblock %}

@@ -1,0 +1,12 @@
+Flask>=3.0
+Flask-SocketIO>=5.3
+simple-websocket>=1.0      # real WebSocket transport for the threaded server
+pyshark>=0.6               # needs Wireshark/tshark installed on the host
+psutil>=5.9
+
+# optional: GeoIP enrichment (also needs a MaxMind GeoLite2-City.mmdb and "geoip_db_path" in config.json)
+# geoip2>=4.8
+
+# development / tests
+pytest>=8
+scapy>=2.5                 # tests/make_pcaps.py

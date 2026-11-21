@@ -1,0 +1,314 @@
+[
+  {
+    "name": "nmap_syn_t4",
+    "kind": "attack",
+    "tool": "nmap",
+    "cmd": "nmap -sS -T4 -p 1-1000 10.77.0.10",
+    "expect": [
+      "portsweep"
+    ],
+    "known_limitation": null,
+    "t_start": 1794074288.392115,
+    "t_end": 1794074288.5956988,
+    "pcap": "nmap_syn_t4.pcap",
+    "victim": "10.77.0.10",
+    "attacker": "10.77.0.2",
+    "returncode": 0,
+    "outcomes": [
+      "portsweep"
+    ],
+    "n_alerts": 1,
+    "first_alert_s": 0.16364383697509766,
+    "verdict": "detected",
+    "packets": 2021,
+    "baselines": {}
+  },
+  {
+    "name": "nmap_connect",
+    "kind": "attack",
+    "tool": "nmap",
+    "cmd": "nmap -sT -T4 -p 1-1000 10.77.0.10",
+    "expect": [
+      "portsweep"
+    ],
+    "known_limitation": null,
+    "t_start": 1794074295.1125684,
+    "t_end": 1794074295.1976364,
+    "pcap": "nmap_connect.pcap",
+    "victim": "10.77.0.10",
+    "attacker": "10.77.0.2",
+    "returncode": 0,
+    "outcomes": [
+      "portsweep"
+    ],
+    "n_alerts": 1,
+    "first_alert_s": 0.06386661529541016,
+    "verdict": "detected",
+    "packets": 2032,
+    "baselines": {}
+  },
+  {
+    "name": "nmap_fin",
+    "kind": "attack",
+    "tool": "nmap",
+    "cmd": "nmap -sF -T4 -p 1-1000 10.77.0.10",
+    "expect": [
+      "portsweep"
+    ],
+    "known_limitation": null,
+    "t_start": 1794074301.712505,
+    "t_end": 1794074303.0049038,
+    "pcap": "nmap_fin.pcap",
+    "victim": "10.77.0.10",
+    "attacker": "10.77.0.2",
+    "returncode": 0,
+    "outcomes": [
+      "portsweep"
+    ],
+    "n_alerts": 1,
+    "first_alert_s": 0.0670018196105957,
+    "verdict": "detected",
+    "packets": 2012,
+    "baselines": {}
+  },
+  {
+    "name": "masscan_1000",
+    "kind": "attack",
+    "tool": "masscan",
+    "cmd": "timeout 20 masscan 10.77.0.10 -p1-1000 --rate 1000 --wait 2 --router-mac 16:3c:8c:41:e7:45 -e veth-a",
+    "expect": [
+      "portsweep"
+    ],
+    "known_limitation": null,
+    "t_start": 1794074309.5200627,
+    "t_end": 1794074314.6606236,
+    "pcap": "masscan_1000.pcap",
+    "victim": "10.77.0.10",
+    "attacker": "10.77.0.2",
+    "returncode": 0,
+    "outcomes": [
+      "portsweep"
+    ],
+    "n_alerts": 1,
+    "first_alert_s": 0.12647342681884766,
+    "verdict": "detected",
+    "packets": 2963,
+    "baselines": {}
+  },
+  {
+    "name": "nmap_ping_sweep",
+    "kind": "attack",
+    "tool": "nmap",
+    "cmd": "nmap -sn -PE --send-ip 10.77.0.100-199",
+    "expect": [
+      "ipsweep"
+    ],
+    "known_limitation": null,
+    "t_start": 1794074321.1809494,
+    "t_end": 1794074341.2211623,
+    "pcap": "nmap_ping_sweep.pcap",
+    "victim": "10.77.0.10",
+    "attacker": "10.77.0.2",
+    "returncode": 0,
+    "outcomes": [
+      "ipsweep"
+    ],
+    "n_alerts": 1,
+    "first_alert_s": 4.0170135498046875,
+    "verdict": "detected",
+    "packets": 250,
+    "baselines": {}
+  },
+  {
+    "name": "fping_sweep",
+    "kind": "attack",
+    "tool": "fping",
+    "cmd": "fping -g 10.77.0.100 10.77.0.199 -r 1 -q",
+    "expect": [
+      "ipsweep"
+    ],
+    "known_limitation": null,
+    "t_start": 1794074347.7365916,
+    "t_end": 1794074350.488364,
+    "pcap": "fping_sweep.pcap",
+    "victim": "10.77.0.10",
+    "attacker": "10.77.0.2",
+    "returncode": 1,
+    "outcomes": [
+      "ipsweep"
+    ],
+    "n_alerts": 1,
+    "first_alert_s": 2.590322494506836,
+    "verdict": "detected",
+    "packets": 216,
+    "baselines": {}
+  },
+  {
+    "name": "hping3_syn_flood",
+    "kind": "attack",
+    "tool": "hping3",
+    "cmd": "hping3 -S -p 80 -i u1000 -c 8000 10.77.0.10",
+    "expect": [
+      "neptune"
+    ],
+    "known_limitation": null,
+    "t_start": 1794074357.0044203,
+    "t_end": 1794074365.709512,
+    "pcap": "hping3_syn_flood.pcap",
+    "victim": "10.77.0.10",
+    "attacker": "10.77.0.2",
+    "returncode": 0,
+    "outcomes": [
+      "neptune"
+    ],
+    "n_alerts": 1,
+    "first_alert_s": 0.020542621612548828,
+    "verdict": "detected",
+    "packets": 24028,
+    "baselines": {}
+  },
+  {
+    "name": "ftp_guessing",
+    "kind": "attack",
+    "tool": "python3",
+    "cmd": "python3 eval/helpers/ftp_guess.py 10.77.0.10 21 45",
+    "expect": [
+      "guess_passwd"
+    ],
+    "known_limitation": null,
+    "t_start": 1794074372.22399,
+    "t_end": 1794074379.0404184,
+    "pcap": "ftp_guessing.pcap",
+    "victim": "10.77.0.10",
+    "attacker": "10.77.0.2",
+    "returncode": 0,
+    "outcomes": [
+      "guess_passwd"
+    ],
+    "n_alerts": 1,
+    "first_alert_s": 0.32509398460388184,
+    "verdict": "detected",
+    "packets": 414,
+    "baselines": {}
+  },
+  {
+    "name": "benign_http_burst",
+    "kind": "benign",
+    "tool": "curl",
+    "cmd": "seq 300 | xargs -P 20 -I{} curl -s -o /dev/null http://10.77.0.10/",
+    "expect": [],
+    "known_limitation": null,
+    "t_start": 1794074385.5560217,
+    "t_end": 1794074387.1229882,
+    "pcap": "benign_http_burst.pcap",
+    "victim": "10.77.0.10",
+    "attacker": "10.77.0.2",
+    "returncode": 0,
+    "outcomes": [],
+    "n_alerts": 0,
+    "first_alert_s": null,
+    "verdict": "clean",
+    "packets": 3014,
+    "baselines": {}
+  },
+  {
+    "name": "benign_service_tour",
+    "kind": "benign",
+    "tool": "python3",
+    "cmd": "python3 eval/helpers/service_tour.py 10.77.0.10 10",
+    "expect": [],
+    "known_limitation": null,
+    "t_start": 1794074393.6405504,
+    "t_end": 1794074400.7309384,
+    "pcap": "benign_service_tour.pcap",
+    "victim": "10.77.0.10",
+    "attacker": "10.77.0.2",
+    "returncode": 0,
+    "outcomes": [],
+    "n_alerts": 0,
+    "first_alert_s": null,
+    "verdict": "clean",
+    "packets": 624,
+    "baselines": {}
+  },
+  {
+    "name": "benign_admin_nmap",
+    "kind": "benign",
+    "tool": "nmap",
+    "cmd": "nmap -sT -p 22,80,3306 10.77.0.10",
+    "expect": [],
+    "known_limitation": null,
+    "t_start": 1794074407.2484503,
+    "t_end": 1794074407.3566074,
+    "pcap": "benign_admin_nmap.pcap",
+    "victim": "10.77.0.10",
+    "attacker": "10.77.0.2",
+    "returncode": 0,
+    "outcomes": [],
+    "n_alerts": 0,
+    "first_alert_s": null,
+    "verdict": "clean",
+    "packets": 26,
+    "baselines": {}
+  },
+  {
+    "name": "benign_single_failed_login",
+    "kind": "benign",
+    "tool": "python3",
+    "cmd": "python3 eval/helpers/ftp_guess.py 10.77.0.10 21 1",
+    "expect": [],
+    "known_limitation": null,
+    "t_start": 1794074413.8730633,
+    "t_end": 1794074414.062182,
+    "pcap": "benign_single_failed_login.pcap",
+    "victim": "10.77.0.10",
+    "attacker": "10.77.0.2",
+    "returncode": 0,
+    "outcomes": [],
+    "n_alerts": 0,
+    "first_alert_s": null,
+    "verdict": "clean",
+    "packets": 24,
+    "baselines": {}
+  },
+  {
+    "name": "benign_large_ping",
+    "kind": "benign",
+    "tool": "ping",
+    "cmd": "ping -c 10 -s 600 10.77.0.10",
+    "expect": [],
+    "known_limitation": null,
+    "t_start": 1794074420.5803277,
+    "t_end": 1794074429.7849748,
+    "pcap": "benign_large_ping.pcap",
+    "victim": "10.77.0.10",
+    "attacker": "10.77.0.2",
+    "returncode": 0,
+    "outcomes": [],
+    "n_alerts": 0,
+    "first_alert_s": null,
+    "verdict": "clean",
+    "packets": 48,
+    "baselines": {}
+  },
+  {
+    "name": "benign_ping",
+    "kind": "benign",
+    "tool": "ping",
+    "cmd": "ping -c 20 -i 0.2 10.77.0.10",
+    "expect": [],
+    "known_limitation": null,
+    "t_start": 1794074436.3004777,
+    "t_end": 1794074440.1767123,
+    "pcap": "benign_ping.pcap",
+    "victim": "10.77.0.10",
+    "attacker": "10.77.0.2",
+    "returncode": 0,
+    "outcomes": [],
+    "n_alerts": 0,
+    "first_alert_s": null,
+    "verdict": "clean",
+    "packets": 58,
+    "baselines": {}
+  }
+]

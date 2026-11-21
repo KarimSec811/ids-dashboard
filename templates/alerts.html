@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Alerts · IDS Console{% endblock %}
+{% block content %}
+    <header class="page-head">
+        <div>
+            <h1>Alerts</h1>
+            <p>One alert per attack. Repeated detections are grouped, and every alert says why it fired.</p>
+        </div>
+        <div class="actions"><button id="loadHistoryBtn" class="btn">Load history</button></div>
+    </header>
+    <div id="alertFilters" class="toolbar" role="group" aria-label="Filter alerts"></div>
+    <section class="card">
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Time</th><th>Attack</th><th>Source</th><th>Target</th><th>Severity</th><th>Confidence</th><th class="num">Events</th><th></th></tr></thead>
+                <tbody id="alertsTableBody"></tbody>
+            </table>
+        </div>
+    </section>
+{% endblock %}

@@ -1,0 +1,37 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install tshark
+        run: |
+          sudo DEBIAN_FRONTEND=noninteractive apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y tshark
+
+      # Ubuntu 25.04+ confines /usr/bin/tshark with an AppArmor profile that
+      # only permits reads under /tmp and /usr/share/wireshark. The PCAPs live
+      # under $GITHUB_WORKSPACE (/home/runner/work/...), which tshark is denied.
+      # Append a read rule to the profile's local include and reload it.
+      # This is a no-op on Ubuntu 24.04 and earlier (no such profile).
+      - name: Let tshark read the checkout (Ubuntu 25.04+ AppArmor)
+        if: runner.os == 'Linux'
+        run: |
+          if [ -f /etc/apparmor.d/tshark ]; then
+            echo "file r ${GITHUB_WORKSPACE}/**," \
+              | sudo tee -a /etc/apparmor.d/local/tshark
+            sudo apparmor_parser -r /etc/apparmor.d/tshark
+          fi
+
+      - run: pip install -r requirements.txt
+
+      - run: python tests/make_pcaps.py
+
+      - run: pytest tests/ -q

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Export · IDS Console{% endblock %}
+{% block content %}
+    <header class="page-head">
+        <div><h1>Export</h1><p>Take data out for offline review and reports.</p></div>
+    </header>
+    <section class="card">
+        <div class="card-head"><h2>Tables</h2></div>
+        <div class="card-body actions">
+            <a class="btn" href="/export/flows.csv">Flows (CSV)</a>
+            <a class="btn" href="/export/alerts.csv">Alerts (CSV)</a>
+        </div>
+    </section>
+    <section class="card" style="margin-top:16px">
+        <div class="card-head"><h2>Evidence capture for an alert</h2></div>
+        <div class="card-body">
+            <p class="sub" style="margin-bottom:14px">Alerts from a replayed sample give the exact packets. For live alerts packets are not stored, so this records the next few seconds of traffic between the same hosts.</p>
+            <div class="actions">
+                <select id="alertSelect" style="min-width:360px" aria-label="Alert"><option value="">Select an alert…</option></select>
+                <button id="exportPcapBtn" class="btn btn-primary">Download PCAP</button>
+            </div>
+            <p id="exportMsg" role="status" style="margin-top:12px"></p>
+        </div>
+    </section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/export.js') }}"></script>
+{% endblock %}

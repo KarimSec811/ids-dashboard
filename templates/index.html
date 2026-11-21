@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard · IDS Console{% endblock %}
+{% block content %}
+    <header class="page-head">
+        <div>
+            <h1>Live traffic</h1>
+            <p>What the sensor sees and flags, second by second.</p>
+        </div>
+        <div class="actions">
+            <select id="replaySelect" aria-label="Sample capture to replay"><option value="">Sample capture…</option></select>
+            <button id="replayBtn" class="btn">Replay</button>
+            <button id="startBtn" class="btn btn-primary">Start capture</button>
+            <button id="stopBtn" class="btn btn-danger" disabled>Stop</button>
+        </div>
+    </header>
+
+    <section class="card trace" aria-label="Live traffic">
+        <div class="trace-head">
+            <div class="trace-stats">
+                <div class="stat signal"><b id="packetRateLarge">0</b><span>packets / s</span></div>
+                <div class="stat alarm"><b id="attacksRateLarge">0</b><span>flagged / s</span></div>
+                <div class="stat"><b id="totalPackets">0</b><span>packets analysed</span></div>
+                <div class="stat"><b id="attackPackets">0</b><span>alerts raised</span></div>
+            </div>
+            <div class="legend"><span><i style="background:var(--signal)"></i>Traffic</span><span><i style="background:var(--alarm)"></i>Flagged as attack</span><span>last 60 s</span></div>
+        </div>
+        <div class="chart-wrap"><canvas id="trafficChart" aria-label="Packets per second over the last 60 seconds"></canvas><div id="chartTip" class="chart-tip" hidden></div></div>
+    </section>
+
+    <div class="split">
+        <section class="card" aria-label="Recent alerts">
+            <div class="card-head"><h2>Recent alerts</h2><span><span id="alertCountLarge" class="count zero">0</span> <span class="sub">unacknowledged</span></span></div>
+            <ol id="recentAlerts" class="feed-list"></ol>
+            <div class="feed-foot"><a href="{{ url_for('alerts') }}">All alerts &rarr;</a></div>
+        </section>
+        <section class="card" aria-label="Sensor health">
+            <div class="card-head"><h2>Sensor health</h2><span id="captureStatus" class="tag">STOPPED</span></div>
+            <div class="rows">
+                <div class="row"><span>CPU</span><span class="meter"><i id="cpuBar" style="width:0%"></i></span><b id="cpuUsage">0%</b></div>
+                <div class="row"><span>Memory</span><span class="meter"><i id="memoryBar" style="width:0%"></i></span><b id="memoryUsage">0 MB</b></div>
+                <div class="row"><span>Queue</span><span class="meter"><i id="queueBar" style="width:0%"></i></span><b id="queueValue">0</b></div>
+                <div class="row"><span>Active flows</span><span></span><b id="activeFlows">0</b></div>
+                <div class="row"><span>Uptime</span><span></span><b id="uptime">00:00:00</b></div>
+            </div>
+        </section>
+    </div>
+{% endblock %}

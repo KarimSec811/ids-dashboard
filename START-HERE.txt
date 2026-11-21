@@ -1,0 +1,28 @@
+WHAT THIS PACK CHANGES  (copy it over your repo; same paths)
+
+  config.json                 REPLACES yours. Your interface, BPF, sampling, threat_intel text and paths are kept;
+                              detection settings, signatures and MITRE ids are new. Your original is saved as
+                              eval/config.original.json. Re-check "interface" (it still says what you had).
+  ids/engine.py, ids/settings.py, app.py, static/js/app.js, API.md, README.md
+  eval/                       kdd_fit.py, kdd_check.py, lint_config.py + the lab harness (new/changed files)
+  docs/TUNING.md              where every number comes from + how to tune
+  docs/EVALUATION.md          real-tool results (dev lab);  docs/EVALUATION-original-config.md = your old config, same captures
+  docs/demo/                  rebuilt static demo
+  tests/                      57 tests (new: slow scan, per-port sweeps, disabled signatures, guards, config lint)
+
+CHECK IT (2 minutes)
+  python -m pytest tests -q               -> 57 passed (needs tshark)
+  python eval/lint_config.py config.json  -> 0 error(s), 0 warning(s)
+  python eval/lint_config.py eval/config.original.json   -> shows the 5 errors your old config had
+
+GIT
+  Add to .gitignore:  data/  .analysis-cache/  eval/results/*/.analysis-cache/
+  Commit eval/results/netns/ (PCAPs + ground truth = the evidence behind docs/EVALUATION.md).
+  NOTE: the Settings page rewrites config.json when you save; review `git diff config.json` before committing.
+
+REPRODUCE THE SIGNATURES
+  curl -LO https://raw.githubusercontent.com/defcom17/NSL_KDD/master/KDDTrain%2B.txt   (and KDDTest%2B.txt) into one folder
+  python eval/kdd_fit.py --data <folder> --base eval/config.original.json --out config.json
+
+THE UNBIASED TEST IS STILL TO DO
+  Everything here was tuned on NSL-KDD and the virtual lab. Run the VM lab once (eval/README.md) and do not tune on it.
