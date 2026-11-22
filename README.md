@@ -132,6 +132,8 @@ profiles (sensitive / balanced / conservative) and how to tune on your own traff
 
 ## Limitations
 
+See [docs/LIMITATIONS.md](docs/LIMITATIONS.md) for the versioned operational boundaries, deployment constraints and evaluation caveats.
+
 - **Validated against real attack tools in a virtual lab (a development set), not yet on a held-out lab or production traffic.** Nothing here has seen a real network's background noise beyond the short benign scenarios.
 - **Throughput is a few hundred to ~1,500 packets/s**, limited by pyshark/tshark parsing. The detection engine itself takes ~0.5 ms per packet. This is a learning-grade sensor, not a line-rate one.
 - **Evasions that work today:** scans slower than the 5-minute window's 15 ports / 25 hosts (Zeek's default would miss them too), scans distributed across many sources, and anything encrypted (payload heuristics only run on cleartext protocols).
@@ -168,7 +170,7 @@ API.md                  Socket.IO events, HTTP routes, alert/flow schemas
 ## Tests
 
 ```bash
-python tests/make_pcaps.py && python -m pytest tests -q      # 57 tests, ~40 s, needs tshark
+python tests/make_pcaps.py && python -m pytest tests -q      # 64 tests, needs tshark for PCAP integration tests
 sudo eval/run_netns_lab.sh                                   # real attack tools in a virtual lab, ~10 min (Linux)
 ```
 
