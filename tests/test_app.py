@@ -10,6 +10,7 @@ import shutil
 import sys
 import time
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest  # type: ignore[reportMissingImports]
 from jinja2 import DictLoader
@@ -84,6 +85,49 @@ def test_health_payload_keeps_the_keys_the_frontend_uses(http):
                 "capture_status", "running", "detection_latency_ms", "uptime"):
         assert key in data, key
     assert data["capture_status"] == "STOPPED" and data["running"] is False
+
+
+def test_sensor_resource_usage_aggregates_process_tree_and_normalizes_cpu(ids, monkeypatch):
+    mb = 1024 * 1024
+
+    class FakeProcess:
+        def __init__(self, pid, rss_mb, cpu_samples):
+            self.pid = pid
+            self._rss = rss_mb * mb
+            self._cpu_samples = iter(cpu_samples)
+            self.cpu_calls = 0
+
+        def create_time(self):
+            return 1234.0
+
+        def cpu_percent(self, interval=None):
+            self.cpu_calls += 1
+            return next(self._cpu_samples)
+
+        def memory_info(self):
+            return SimpleNamespace(rss=self._rss)
+
+    # A new Process wrapper is returned on each tree scan. The sampler should
+    # retain the original handles so psutil can calculate deltas between calls.
+    root_first = FakeProcess(100, 60, [0.0, 60.0])
+    child_first = FakeProcess(200, 20, [0.0, 20.0])
+    root_next = FakeProcess(100, 60, [99.0])
+    child_next = FakeProcess(200, 20, [99.0])
+    snapshots = iter([
+        [root_first, child_first],
+        [root_next, child_next],
+    ])
+
+    monkeypatch.setattr(ids, "_sensor_processes", lambda: next(snapshots))
+    monkeypatch.setattr(ids.psutil, "cpu_count", lambda logical=True: 4)
+    monkeypatch.setattr(ids, "_sensor_cpu_process_handles", {})
+
+    # First samples establish psutil's per-process baseline.
+    assert ids._sensor_resource_usage() == (0.0, 80.0)
+    # 80% summed across four logical CPUs = 20% of total machine capacity.
+    assert ids._sensor_resource_usage() == (20.0, 80.0)
+    assert root_first.cpu_calls == 2 and child_first.cpu_calls == 2
+    assert root_next.cpu_calls == 0 and child_next.cpu_calls == 0
 
 
 def test_settings_update_validates(http, ids):

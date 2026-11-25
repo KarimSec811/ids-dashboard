@@ -90,8 +90,10 @@ RECENT_FLOWS_LIMIT = int(settings.get("recent_flows_limit", 1000))
 CHART_HISTORY_SECONDS = 60
 PCAP_SUFFIXES = (".pcap", ".pcapng", ".cap")
 
-psutil.cpu_percent(interval=None)       # warm-up: the first call has no baseline
 _process_handle = psutil.Process(os.getpid())
+_process_handle.cpu_percent(interval=None)  # warm up process-level sampling
+_sensor_cpu_lock = threading.Lock()
+_sensor_cpu_process_handles: Dict[Tuple[int, float], psutil.Process] = {}
 
 
 def _is_loopback(host: str) -> bool:
@@ -490,8 +492,61 @@ def _resolve_replay(name: str) -> Optional[Path]:
 # Health / stats payloads
 # --------------------------------------------------------------------------
 
+def _sensor_processes() -> List[psutil.Process]:
+    """Return the sensor process and its descendants (for example, tshark)."""
+    try:
+        return [_process_handle, *_process_handle.children(recursive=True)]
+    except psutil.Error:
+        # Keep the dashboard available if process-tree inspection is restricted.
+        return [_process_handle]
+
+
+def _sensor_resource_usage() -> Tuple[float, float]:
+    """Return process-tree CPU (% of total logical CPU capacity) and RSS in MB.
+
+    psutil's non-blocking Process.cpu_percent() needs two readings from the same
+    Process object. Keep handles keyed by PID and creation time so child-process
+    readings remain meaningful across the three-second health updates and PID
+    reuse cannot attach an old sample to a new process.
+    """
+    cpu_total = 0.0
+    rss_total = 0
+    current_handles: Dict[Tuple[int, float], psutil.Process] = {}
+
+    with _sensor_cpu_lock:
+        for process in _sensor_processes():
+            try:
+                key = (process.pid, process.create_time())
+                handle = _sensor_cpu_process_handles.get(key, process)
+            except psutil.Error:
+                continue
+
+            try:
+                cpu_total += max(0.0, handle.cpu_percent(interval=None))
+            except psutil.Error:
+                pass
+
+            try:
+                rss_total += handle.memory_info().rss
+            except psutil.Error:
+                pass
+
+            current_handles[key] = handle
+
+        # Drop handles for child processes that have exited.
+        _sensor_cpu_process_handles.clear()
+        _sensor_cpu_process_handles.update(current_handles)
+
+    logical_cpus = psutil.cpu_count(logical=True) or 1
+    # Normalize per-process percentages to the whole machine's logical CPU
+    # capacity so the dashboard consistently reports a 0-100% value.
+    cpu_percent = min(100.0, max(0.0, cpu_total / logical_cpus))
+    memory_used_mb = rss_total / (1024 * 1024)
+    return round(cpu_percent, 1), round(memory_used_mb, 1)
+
+
 def get_system_health() -> Dict[str, Any]:
-    mem_info = _process_handle.memory_info()
+    sensor_cpu_percent, sensor_memory_mb = _sensor_resource_usage()
     vm = psutil.virtual_memory()
     analyzer = rt.analyzer
     running = rt.running
@@ -502,8 +557,8 @@ def get_system_health() -> Dict[str, Any]:
     totals = ({"packets": analyzer.packets_processed, "attacks": analyzer.aggregator.created}
               if analyzer else rt.last_totals)
     return {
-        "cpu_percent": psutil.cpu_percent(interval=None),
-        "memory_used_mb": round(mem_info.rss / (1024 * 1024), 1),
+        "cpu_percent": sensor_cpu_percent,
+        "memory_used_mb": sensor_memory_mb,
         "memory_total_mb": round(vm.total / (1024 * 1024), 1),
         "queue_length": flow_event_queue.qsize(),
         "queue_depths": _queue_depths(),
